@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const express = require("express");
@@ -14,7 +13,7 @@ const app = express();
 
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        origin: true,
         credentials: true
     })
 );
@@ -33,18 +32,6 @@ app.use(
         path.join(__dirname, "uploads")
     )
 );
-
-
-// =====================================================
-// TEST ROUTE
-// =====================================================
-
-app.get("/", (req, res) => {
-    res.json({
-        success: true,
-        message: "Fashion Store API is running"
-    });
-});
 
 
 // =====================================================
@@ -195,16 +182,14 @@ app.use(
 
 
 // =====================================================
-// 404
+// SERVE FRONTEND
 // =====================================================
 
-app.use((req, res) => {
+const frontendPath = path.join(__dirname, "..", "frontend", "dist");
+app.use(express.static(frontendPath));
 
-    res.status(404).json({
-        success: false,
-        message: "API endpoint not found"
-    });
-
+app.get("/{*splat}", (req, res) => {
+    res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 
@@ -253,10 +238,3 @@ app.listen(PORT, () => {
     );
 
 });
-if (process.env.NODE_ENV === "production") {
-    const frontendPath = path.join(__dirname, "..", "frontend", "dist");
-    app.use(express.static(frontendPath));
-    app.get("/{*splat}", (req, res) => {
-        res.sendFile(path.join(frontendPath, "index.html"));
-    });
-}
