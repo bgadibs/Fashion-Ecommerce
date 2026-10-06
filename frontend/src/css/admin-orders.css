@@ -1,0 +1,72 @@
+.admin-orders-page {
+    width: 100%;
+}
+
+
+.admin-orders-table-wrapper {
+    background: white;
+    border-radius: 14px;
+    border: 1px solid #f1ddd7;
+    overflow-x: auto;
+}
+
+
+.admin-orders-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+}
+
+
+.admin-orders-table th {
+    text-align: left;
+    background: #fff4ef;
+    color: #555;
+    padding: 15px;
+    font-size: 13px;
+}
+
+
+.admin-orders-table td {
+    padding: 15px;
+    border-bottom: 1px solid #f1e6e2;
+    color: #444;
+}
+
+
+.admin-orders-table td small {
+    display: block;
+    color: #999;
+    margin-top: 4px;
+}
+
+
+.order-select {
+    border: 1px solid #e0d5d1;
+    border-radius: 7px;
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    text-transform: capitalize;
+}
+
+
+.empty-orders {
+    background: white;
+    padding: 60px;
+    text-align: center;
+    border-radius: 14px;
+    color: #888;
+}
+
+
+@media (max-width: 700px) {
+
+    .admin-orders-table-wrapper {
+        margin-top: 15px;
+    }
+
+    .orders-header {
+        margin-bottom: 15px;
+    }
+}

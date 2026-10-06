@@ -1,0 +1,467 @@
+/* =========================================================
+   ADMIN STORE
+   Full Store Preview inside Admin Panel
+========================================================= */
+
+
+/* =========================================================
+   MAIN WRAPPER
+========================================================= */
+
+.admin-store-wrapper {
+    width: 100%;
+}
+
+
+/* =========================================================
+   ADMIN STORE TOP BAR
+========================================================= */
+
+.admin-store-topbar {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 25px;
+
+    margin-bottom: 25px;
+
+    padding: 5px 0;
+}
+
+.admin-store-preview-label {
+    display: inline-block;
+
+    margin-bottom: 7px;
+
+    color: #f47b52;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    letter-spacing: 2px;
+
+    text-transform: uppercase;
+}
+
+.admin-store-topbar h1 {
+    margin: 0 0 7px;
+
+    color: #292a7c;
+
+    font-size: 30px;
+
+    line-height: 1.2;
+}
+
+.admin-store-topbar p {
+    margin: 0;
+
+    color: #777;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   BACK TO DASHBOARD
+========================================================= */
+
+.admin-store-back-dashboard {
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    padding: 12px 19px;
+
+    border: 1px solid #ddd4cf;
+
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #292a7c;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        transform 0.25s ease;
+}
+
+.admin-store-back-dashboard:hover {
+    background: #fff4ef;
+
+    color: #f47b52;
+
+    transform: translateX(-2px);
+}
+
+
+/* =========================================================
+   PREVIEW NOTICE
+========================================================= */
+
+.admin-store-preview-notice {
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+
+    padding: 15px 18px;
+
+    border: 1px solid #eaded8;
+
+    border-radius: 10px;
+
+    background: #fffaf7;
+}
+
+.admin-store-preview-icon {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    width: 42px;
+
+    height: 42px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    font-size: 19px;
+}
+
+.admin-store-preview-notice strong {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: #292a7c;
+
+    font-size: 13px;
+}
+
+.admin-store-preview-notice p {
+    margin: 0;
+
+    color: #777;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   STORE HOME
+========================================================= */
+
+.admin-store-home {
+    width: 100%;
+
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border: 1px solid #eee8e3;
+
+    border-radius: 4px;
+
+    box-shadow:
+        0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+/*
+ * Your existing home.css already styles:
+ *
+ * .hero
+ * .hero-content
+ * .hero-title
+ * .hero-description
+ * etc.
+ *
+ * We only make sure buttons behave correctly
+ * because these are buttons instead of Links.
+ */
+
+.admin-store-home .hero-button,
+.admin-store-home .hero-button-secondary {
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   CATEGORY BUTTONS
+========================================================= */
+
+/*
+ * Existing home.css expects .category-card.
+ * We use buttons instead of Links so the admin stays
+ * inside /admin/store.
+ */
+
+.admin-store-category-button {
+    width: 100%;
+
+    margin: 0;
+
+    padding: 28px 20px;
+
+    border: 1px solid #e8e5e1;
+
+    border-radius: 4px;
+
+    background: #ffffff;
+
+    font-family: inherit;
+
+    text-align: center;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease,
+        background 0.25s ease;
+}
+
+.admin-store-category-button:hover {
+    transform: translateY(-4px);
+
+    border-color: #d8c2ad;
+
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.admin-store-category-button.selected {
+    border-color: #8a6a45;
+
+    background: #fcfaf7;
+
+    box-shadow:
+        0 8px 22px rgba(138, 106, 69, 0.12);
+}
+
+.admin-store-category-button .category-icon {
+    margin-bottom: 12px;
+}
+
+.admin-store-category-button h3 {
+    margin: 0 0 7px;
+
+    color: #222;
+
+    font-size: 17px;
+
+    font-weight: 700;
+}
+
+.admin-store-category-button p {
+    margin: 0;
+
+    color: #777;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   VIEW ALL BUTTON
+========================================================= */
+
+.admin-store-view-all-button {
+    border: none;
+
+    background: transparent;
+
+    font-family: inherit;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   PRODUCT SUMMARY
+========================================================= */
+
+.admin-store-product-summary {
+    color: #777;
+
+    font-size: 13px;
+
+    white-space: nowrap;
+}
+
+.admin-store-product-summary strong {
+    color: #8a6a45;
+
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   PRODUCT CARD
+========================================================= */
+
+.admin-store-home .product-card {
+    height: 100%;
+}
+
+
+/* =========================================================
+   PRODUCT SECTION
+========================================================= */
+
+.admin-store-home #admin-store-products {
+    scroll-margin-top: 20px;
+}
+
+
+/* =========================================================
+   PRODUCT EMPTY STATE
+========================================================= */
+
+.admin-store-home .home-empty {
+    min-height: 230px;
+}
+
+
+/* =========================================================
+   FASHION BANNER BUTTON
+========================================================= */
+
+.admin-store-home .home-primary-button {
+    cursor: pointer;
+
+    font-family: inherit;
+}
+
+
+/* =========================================================
+   FINAL CTA BUTTON
+========================================================= */
+
+.admin-store-home .home-final-content .home-primary-button {
+    cursor: pointer;
+
+    font-family: inherit;
+}
+
+
+/* =========================================================
+   STATS
+========================================================= */
+
+.admin-store-home .home-stat {
+    min-width: 0;
+}
+
+
+/* =========================================================
+   REMOVE UNNECESSARY CUSTOMER INTERACTION
+========================================================= */
+
+/*
+ * Admin preview does not need customer location controls,
+ * cart controls, wishlist controls, or customer navbar.
+ *
+ * They are intentionally not rendered by AdminStore.
+ */
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .admin-store-topbar {
+        align-items: flex-start;
+    }
+
+    .admin-store-home .home-category-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .admin-store-topbar {
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+    .admin-store-back-dashboard {
+        width: 100%;
+    }
+
+    .admin-store-preview-notice {
+        align-items: flex-start;
+    }
+
+    .admin-store-home .home-category-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-store-product-summary {
+        white-space: normal;
+
+        font-size: 12px;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 450px) {
+
+    .admin-store-topbar h1 {
+        font-size: 25px;
+    }
+
+    .admin-store-preview-notice {
+        padding: 13px;
+    }
+
+}

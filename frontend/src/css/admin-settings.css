@@ -1,0 +1,410 @@
+
+/* =========================================================
+   ADMIN SETTINGS PAGE
+========================================================= */
+
+.admin-settings-page {
+    width: 100%;
+    min-height: 100vh;
+    padding: 35px;
+    background: #f5f8fc;
+    color: #202b3c;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.admin-settings-header {
+    margin-bottom: 28px;
+}
+
+.admin-settings-eyebrow {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    color: #3978c7;
+}
+
+.admin-settings-header h1 {
+    margin: 0 0 8px;
+    font-size: 32px;
+    font-weight: 700;
+    color: #1e2d42;
+}
+
+.admin-settings-header p {
+    margin: 0;
+    font-size: 14px;
+    color: #758196;
+}
+
+
+/* =========================================================
+   MESSAGES
+========================================================= */
+
+.admin-settings-success,
+.admin-settings-error {
+    margin-bottom: 22px;
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.admin-settings-success {
+    background: #eaf8ef;
+    border: 1px solid #bce5c9;
+    color: #267340;
+}
+
+.admin-settings-error {
+    background: #fff0f0;
+    border: 1px solid #efc2c2;
+    color: #b33a3a;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.admin-settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+
+/* =========================================================
+   SECTION
+========================================================= */
+
+.settings-section {
+    padding: 28px;
+    background: #ffffff;
+    border: 1px solid #e4eaf1;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(35, 65, 95, 0.04);
+}
+
+.settings-section-title {
+    margin-bottom: 24px;
+}
+
+.settings-section-title h2 {
+    margin: 0 0 6px;
+    font-size: 20px;
+    color: #24364d;
+}
+
+.settings-section-title p {
+    margin: 0;
+    font-size: 13px;
+    color: #7a8799;
+}
+
+
+/* =========================================================
+   GRID
+========================================================= */
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.settings-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-field-full {
+    grid-column: 1 / -1;
+}
+
+
+/* =========================================================
+   LABEL
+========================================================= */
+
+.settings-field label {
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #34465d;
+}
+
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+.settings-field input,
+.settings-field select,
+.settings-field textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid #d8e0ea;
+    border-radius: 7px;
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+    color: #25364d;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.settings-field input,
+.settings-field select {
+    height: 45px;
+}
+
+.settings-field textarea {
+    resize: vertical;
+    min-height: 105px;
+}
+
+.settings-field input:focus,
+.settings-field select:focus,
+.settings-field textarea:focus {
+    border-color: #4d8edb;
+    box-shadow: 0 0 0 3px rgba(77, 142, 219, 0.10);
+}
+
+.settings-field input::placeholder,
+.settings-field textarea::placeholder {
+    color: #a1adbb;
+}
+
+.settings-field small {
+    margin-top: 7px;
+    font-size: 11px;
+    color: #8995a5;
+}
+
+
+/* =========================================================
+   TOGGLE LIST
+========================================================= */
+
+.settings-toggle-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-toggle {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    min-height: 76px;
+    padding: 16px 0;
+
+    border-bottom: 1px solid #edf0f4;
+
+    cursor: pointer;
+}
+
+.settings-toggle:last-child {
+    border-bottom: none;
+}
+
+.settings-toggle div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.settings-toggle strong {
+    font-size: 14px;
+    color: #304258;
+}
+
+.settings-toggle div span {
+    font-size: 12px;
+    color: #8793a3;
+}
+
+
+/* =========================================================
+   TOGGLE
+========================================================= */
+
+.settings-toggle input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.toggle-slider {
+    position: relative;
+
+    flex-shrink: 0;
+
+    width: 48px;
+    height: 26px;
+
+    background: #d8dee7;
+
+    border-radius: 30px;
+
+    transition: background 0.2s ease;
+}
+
+.toggle-slider::after {
+    content: "";
+
+    position: absolute;
+
+    top: 3px;
+    left: 3px;
+
+    width: 20px;
+    height: 20px;
+
+    background: #ffffff;
+
+    border-radius: 50%;
+
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+
+    transition: transform 0.2s ease;
+}
+
+.settings-toggle input:checked + .toggle-slider {
+    background: #4d8edb;
+}
+
+.settings-toggle input:checked + .toggle-slider::after {
+    transform: translateX(22px);
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.settings-actions {
+    display: flex;
+    justify-content: flex-end;
+
+    padding-bottom: 30px;
+}
+
+.settings-save-button {
+    min-width: 155px;
+
+    padding: 13px 25px;
+
+    border: none;
+    border-radius: 7px;
+
+    background: #3f80c9;
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.settings-save-button:hover {
+    background: #326eaf;
+    transform: translateY(-1px);
+}
+
+.settings-save-button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.admin-settings-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 400px;
+
+    font-size: 15px;
+    color: #77859a;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 800px) {
+
+    .admin-settings-page {
+        padding: 25px;
+    }
+
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-field-full {
+        grid-column: auto;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .admin-settings-page {
+        padding: 18px;
+    }
+
+    .admin-settings-header h1 {
+        font-size: 27px;
+    }
+
+    .settings-section {
+        padding: 20px;
+    }
+
+    .settings-toggle {
+        align-items: flex-start;
+    }
+
+    .settings-toggle div {
+        max-width: calc(100% - 65px);
+    }
+
+    .settings-save-button {
+        width: 100%;
+    }
+
+    .settings-actions {
+        justify-content: stretch;
+    }
+}
+

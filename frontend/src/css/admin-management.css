@@ -1,0 +1,244 @@
+.admin-management {
+    padding: 30px;
+    background: #f7f8fc;
+    min-height: 100vh;
+}
+
+.admin-management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.admin-management-header h1 {
+    margin: 0;
+    color: #292a7c;
+}
+
+.admin-management-header p {
+    color: #777;
+}
+
+.create-admin-btn {
+    background: #292a7c;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.create-admin-btn:hover {
+    background: #20215f;
+}
+
+
+/* FORM */
+
+.admin-form-card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+}
+
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.form-header h2 {
+    margin: 0;
+    color: #292a7c;
+}
+
+.close-btn {
+    border: none;
+    background: #eee;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-grid label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 600;
+}
+
+.form-grid input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    outline: none;
+}
+
+.form-grid input:focus {
+    border-color: #292a7c;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.cancel-btn,
+.save-btn {
+    padding: 11px 20px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.cancel-btn {
+    background: #eee;
+}
+
+.save-btn {
+    background: #292a7c;
+    color: white;
+}
+
+
+/* TABLE */
+
+.admin-table-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+}
+
+.admin-table-card h2 {
+    color: #292a7c;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: #f8f8f8;
+    padding: 14px;
+    text-align: left;
+    font-size: 14px;
+}
+
+td {
+    padding: 14px;
+    border-top: 1px solid #eee;
+    font-size: 14px;
+}
+
+.status-active,
+.status-inactive {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-active {
+    background: #e7f8ed;
+    color: #16833b;
+}
+
+.status-inactive {
+    background: #ffe8e8;
+    color: #d33;
+}
+
+.admin-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.admin-actions button {
+    border: none;
+    padding: 7px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.edit-btn {
+    background: #eeeeff;
+    color: #292a7c;
+}
+
+.activate-btn {
+    background: #e7f8ed;
+    color: #16833b;
+}
+
+.deactivate-btn {
+    background: #fff2dc;
+    color: #b66a00;
+}
+
+.delete-btn {
+    background: #ffe8e8;
+    color: #d33;
+}
+
+.empty-admins {
+    text-align: center;
+    padding: 50px;
+    color: #777;
+}
+
+.admin-management-loading {
+    padding: 80px;
+    text-align: center;
+    color: #292a7c;
+    font-size: 18px;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+
+    .admin-management {
+        padding: 15px;
+    }
+
+    .admin-management-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    table {
+        min-width: 900px;
+    }
+}
