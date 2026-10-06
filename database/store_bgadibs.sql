@@ -525,21 +525,3 @@ COLLATE=utf8mb4_general_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- =========================================================
--- TABLES INCLUDED
--- =========================================================
--- 1. users
--- 2. categories
--- 3. products
--- 4. product_variants
--- 5. product_images
--- 6. addresses
--- 7. cart_items
--- 8. orders
--- 9. order_items
--- 10. password_resets
--- 11. wishlist
--- 12. admin_settings
--- 13. customer_settings
--- =========================================================
-

@@ -956,8 +956,7 @@
             rgba(35, 35, 35, 0.58) 42%,
             rgba(35, 35, 35, 0.08) 100%
         ),
-        url("/fashion-banner.jpg")
-        center center / cover no-repeat;
+        
 }
 
 .home-fashion-content {
