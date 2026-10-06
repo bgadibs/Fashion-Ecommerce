@@ -40,7 +40,7 @@ import Address from "./pages/Address";
 
 import AdminDashboard from "./admin/AdminDashboard";
 
-import AdminProducts from "./admin/adminProducts";
+import AdminProducts from "./admin/AdminProducts";
 
 import AddProduct from "./admin/AddProduct";
 
