@@ -1,4 +1,3 @@
-
 import {
     createContext,
     useContext,
@@ -11,10 +10,9 @@ import {
     getCategories,
 } from "../services/api";
 
-
 /* =====================================================
-   DEFAULTS
-   ===================================================== */
+   DEFAULT SETTINGS
+===================================================== */
 
 const defaultSettings = {
     store_name: "BgadiFashion",
@@ -28,58 +26,80 @@ const defaultSettings = {
 
 /* =====================================================
    CONTEXT
-   ===================================================== */
+===================================================== */
 
-const StoreContext = createContext();
+const StoreContext = createContext(null);
 
 
 /* =====================================================
    PROVIDER
-   ===================================================== */
+===================================================== */
 
 export const StoreProvider = ({ children }) => {
 
-    const [settings, setSettings] =
-        useState(defaultSettings);
+    const [settings, setSettings] = useState(defaultSettings);
 
-    const [categories, setCategories] =
-        useState([]);
+    const [categories, setCategories] = useState([]);
 
-    const [loading, setLoading] =
-        useState(true);
+    const [loading, setLoading] = useState(true);
 
 
-    /* -------------------------------------------------
-       PARSE STORE NAME INTO PARTS
-       "BgadiFashion" → { first: "Bgadi", second: "Fashion" }
-       "My Cool Store" → { first: "My Cool Store", second: "" }
-    ------------------------------------------------- */
+    /* =================================================
+       STORE NAME
+    ================================================= */
 
-    const storeName = settings.store_name || defaultSettings.store_name;
+    const storeName =
+        settings.store_name ||
+        defaultSettings.store_name;
+
+
+    /* =================================================
+       STORE NAME PARTS
+
+       Examples:
+
+       BgadiFashion
+       → Bgadi / Fashion
+
+       My Cool Store
+       → My / Cool Store
+    ================================================= */
 
     const storeNameParts = (() => {
 
-        // Try to split camelCase like "BgadiFashion"
-        const camelParts =
-            storeName.match(/^([A-Z][a-z]+)([A-Z][a-z]+.*)$/);
+        const camelParts = storeName.match(
+            /^([A-Z][a-z]+)([A-Z][a-z]+.*)$/
+        );
 
         if (camelParts) {
+
             return {
                 first: camelParts[1],
                 second: camelParts[2],
             };
+
         }
 
-        // Try space-separated: take first word + rest
+
         const spaceIndex =
             storeName.indexOf(" ");
 
+
         if (spaceIndex > 0) {
+
             return {
-                first: storeName.slice(0, spaceIndex),
-                second: storeName.slice(spaceIndex + 1),
+                first: storeName.slice(
+                    0,
+                    spaceIndex
+                ),
+
+                second: storeName.slice(
+                    spaceIndex + 1
+                ),
             };
+
         }
+
 
         return {
             first: storeName,
@@ -89,53 +109,137 @@ export const StoreProvider = ({ children }) => {
     })();
 
 
+    /* =================================================
+       BRAND INITIAL
+    ================================================= */
+
     const brandInitial =
         storeName.charAt(0).toUpperCase();
 
 
-    /* -------------------------------------------------
-       MAIN CATEGORIES (parent_id === null)
-    ------------------------------------------------- */
+    /* =================================================
+       MAIN CATEGORIES
+
+       Supports:
+
+       parent_id = null
+       parent_id = 0
+       parent_id = "0"
+       parent_id = ""
+    ================================================= */
 
     const mainCategories = categories.filter(
-        (cat) => cat.parent_id === null
+        (category) =>
+            category.parent_id === null ||
+            category.parent_id === undefined ||
+            category.parent_id === 0 ||
+            category.parent_id === "0" ||
+            category.parent_id === ""
     );
 
 
-    /* -------------------------------------------------
+    /* =================================================
        LOAD STORE DATA
-    ------------------------------------------------- */
+    ================================================= */
 
     useEffect(() => {
+
+        let mounted = true;
+
 
         const loadStoreData = async () => {
 
             try {
 
-                const [settingsRes, categoriesRes] =
-                    await Promise.allSettled([
-                        getPublicSettings(),
-                        getCategories(),
-                    ]);
+                const [
+                    settingsResult,
+                    categoriesResult,
+                ] = await Promise.allSettled([
 
+                    getPublicSettings(),
+
+                    getCategories(),
+
+                ]);
+
+
+                /* =====================================
+                   STORE SETTINGS
+                ===================================== */
 
                 if (
-                    settingsRes.status === "fulfilled" &&
-                    settingsRes.value.data?.success
+                    mounted &&
+                    settingsResult.status === "fulfilled"
                 ) {
-                    setSettings((prev) => ({
-                        ...prev,
-                        ...settingsRes.value.data.settings,
-                    }));
+
+                    const response =
+                        settingsResult.value;
+
+                    if (response?.data?.success) {
+
+                        setSettings((previous) => ({
+
+                            ...previous,
+
+                            ...(
+                                response.data.settings ||
+                                {}
+                            ),
+
+                        }));
+
+                    }
+
                 }
 
 
+                /* =====================================
+                   CATEGORIES
+                ===================================== */
+
                 if (
-                    categoriesRes.status === "fulfilled"
+                    mounted &&
+                    categoriesResult.status === "fulfilled"
                 ) {
-                    setCategories(
-                        categoriesRes.value.data?.categories || []
-                    );
+
+                    const response =
+                        categoriesResult.value;
+
+                    const categoryData =
+                        response?.data?.categories;
+
+
+                    if (Array.isArray(categoryData)) {
+
+                        setCategories(categoryData);
+
+                    } else if (
+                        Array.isArray(response?.data)
+                    ) {
+
+                        /*
+                           Supports APIs returning:
+
+                           [
+                             {...},
+                             {...}
+                           ]
+
+                           instead of:
+
+                           {
+                             categories: [...]
+                           }
+                        */
+
+                        setCategories(response.data);
+
+                    } else {
+
+                        setCategories([]);
+
+                    }
+
                 }
 
             } catch (error) {
@@ -147,7 +251,11 @@ export const StoreProvider = ({ children }) => {
 
             } finally {
 
-                setLoading(false);
+                if (mounted) {
+
+                    setLoading(false);
+
+                }
 
             }
 
@@ -156,49 +264,88 @@ export const StoreProvider = ({ children }) => {
 
         loadStoreData();
 
+
+        return () => {
+
+            mounted = false;
+
+        };
+
     }, []);
 
 
-    /* -------------------------------------------------
+    /* =================================================
        UPDATE DOCUMENT TITLE
-    ------------------------------------------------- */
+    ================================================= */
 
     useEffect(() => {
 
         if (!loading && storeName) {
+
             document.title = storeName;
+
         }
 
-    }, [loading, storeName]);
+    }, [
+        loading,
+        storeName,
+    ]);
 
 
-    /* -------------------------------------------------
+    /* =================================================
        CONTEXT VALUE
-    ------------------------------------------------- */
+    ================================================= */
 
     const value = {
+
         settings,
+
         storeName,
+
         storeNameParts,
+
         brandInitial,
+
         categories,
+
         mainCategories,
+
         loading,
+
     };
 
 
     return (
+
         <StoreContext.Provider value={value}>
+
             {children}
+
         </StoreContext.Provider>
+
     );
 
 };
 
 
 /* =====================================================
-   HOOK
-   ===================================================== */
+   CUSTOM HOOK
+===================================================== */
 
-export const useStore = () =>
-    useContext(StoreContext);
+export const useStore = () => {
+
+    const context = useContext(StoreContext);
+
+
+    if (!context) {
+
+        throw new Error(
+            "useStore must be used inside StoreProvider"
+        );
+
+    }
+
+
+    return context;
+
+};
