@@ -10,12 +10,14 @@ import {
 } from "react-icons/fi";
 
 import { registerUser } from "../services/api";
+import { useStore } from "../context/StoreContext";
 
 import "../css/auth.css";
 
 const Register = () => {
 
     const navigate = useNavigate();
+    const { storeName, storeNameParts } = useStore();
 
     const [form, setForm] = useState({
         name: "",
@@ -83,13 +85,16 @@ const Register = () => {
             <div className="auth-container">
 
                 <div className="auth-brand">
-                    Fashion<span>Hub</span>
+                    {storeNameParts.first}
+                    {storeNameParts.second && (
+                        <span>{storeNameParts.second}</span>
+                    )}
                 </div>
 
                 <div className="auth-header">
 
                     <span>
-                        JOIN FASHIONHUB
+                        JOIN {storeName.toUpperCase()}
                     </span>
 
                     <h1>

@@ -16,6 +16,10 @@ import {
     getProducts
 } from "../services/api";
 
+import {
+    useStore
+} from "../context/StoreContext";
+
 import "../css/home.css";
 import "../css/admin-store.css";
 
@@ -23,6 +27,11 @@ import "../css/admin-store.css";
 const AdminStore = () => {
 
     const navigate = useNavigate();
+
+    const {
+        storeName,
+        mainCategories: storeCategories,
+    } = useStore();
 
 
     // =====================================================
@@ -140,8 +149,14 @@ const AdminStore = () => {
             }
 
 
+            /* Dynamic filtering by category ID or name */
             return products.filter(
                 (product) => {
+
+                    const productCatId =
+                        String(
+                            product.category_id || ""
+                        );
 
                     const categoryName =
                         String(
@@ -151,7 +166,6 @@ const AdminStore = () => {
                             ""
                         ).toLowerCase();
 
-
                     const categorySlug =
                         String(
                             product.category_slug ||
@@ -159,87 +173,21 @@ const AdminStore = () => {
                         ).toLowerCase();
 
 
+                    /* Match by category ID */
                     if (
-                        selectedCategory === "women"
+                        productCatId === String(selectedCategory)
                     ) {
-
-                        return (
-                            categoryName.includes(
-                                "women"
-                            ) ||
-                            categoryName.includes(
-                                "woman"
-                            ) ||
-                            categorySlug.includes(
-                                "women"
-                            )
-                        );
-
+                        return true;
                     }
 
+                    /* Fallback: match by name */
+                    const selectedLower =
+                        String(selectedCategory).toLowerCase();
 
-                    if (
-                        selectedCategory === "men"
-                    ) {
-
-                        return (
-                            categoryName.includes(
-                                "men"
-                            ) ||
-                            categoryName.includes(
-                                "man"
-                            ) ||
-                            categorySlug.includes(
-                                "men"
-                            )
-                        );
-
-                    }
-
-
-                    if (
-                        selectedCategory === "kids"
-                    ) {
-
-                        return (
-                            categoryName.includes(
-                                "kid"
-                            ) ||
-                            categoryName.includes(
-                                "children"
-                            ) ||
-                            categorySlug.includes(
-                                "kid"
-                            )
-                        );
-
-                    }
-
-
-                    if (
-                        selectedCategory ===
-                        "jewellery"
-                    ) {
-
-                        return (
-                            categoryName.includes(
-                                "jewellery"
-                            ) ||
-                            categoryName.includes(
-                                "jewelry"
-                            ) ||
-                            categorySlug.includes(
-                                "jewellery"
-                            ) ||
-                            categorySlug.includes(
-                                "jewelry"
-                            )
-                        );
-
-                    }
-
-
-                    return false;
+                    return (
+                        categoryName.includes(selectedLower) ||
+                        categorySlug.includes(selectedLower)
+                    );
 
                 }
             );
@@ -301,43 +249,21 @@ const AdminStore = () => {
 
     const getCategoryTitle = () => {
 
-        if (
-            selectedCategory === "women"
-        ) {
-
-            return "Women's Fashion";
-
+        if (selectedCategory === "all") {
+            return "Latest Products";
         }
 
+        /* Find the category by ID or name */
+        const match = storeCategories.find(
+            (cat) =>
+                String(cat.id) === String(selectedCategory) ||
+                cat.name.toLowerCase() ===
+                    String(selectedCategory).toLowerCase()
+        );
 
-        if (
-            selectedCategory === "men"
-        ) {
-
-            return "Men's Fashion";
-
-        }
-
-
-        if (
-            selectedCategory === "kids"
-        ) {
-
-            return "Kids Fashion";
-
-        }
-
-
-        if (
-            selectedCategory === "jewellery"
-        ) {
-
-            return "Jewellery";
-
-        }
-
-
-        return "Latest Products";
+        return match
+            ? match.name
+            : "Latest Products";
 
     };
 
@@ -379,7 +305,7 @@ const AdminStore = () => {
                         </span>
 
                         <h1>
-                            Fashion Store
+                            {storeName}
                         </h1>
 
                         <p>
@@ -476,32 +402,29 @@ const AdminStore = () => {
 
                                 <div className="hero-buttons">
 
-                                    <button
-                                        type="button"
-                                        className="hero-button"
-                                        onClick={() =>
-                                            handleCategoryClick(
-                                                "women"
-                                            )
-                                        }
-                                    >
-                                        Shop Women
-                                        →
-                                    </button>
+                                    {storeCategories
+                                        .slice(0, 2)
+                                        .map((cat, idx) => (
 
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            className={
+                                                idx === 0
+                                                    ? "hero-button"
+                                                    : "hero-button-secondary"
+                                            }
+                                            onClick={() =>
+                                                handleCategoryClick(
+                                                    cat.id
+                                                )
+                                            }
+                                        >
+                                            Shop {cat.name}
+                                            {" →"}
+                                        </button>
 
-                                    <button
-                                        type="button"
-                                        className="hero-button-secondary"
-                                        onClick={() =>
-                                            handleCategoryClick(
-                                                "men"
-                                            )
-                                        }
-                                    >
-                                        Shop Men
-                                        →
-                                    </button>
+                                    ))}
 
                                 </div>
 
@@ -557,7 +480,7 @@ const AdminStore = () => {
 
 
                         <div className="hero-side-label">
-                            FASHION STORE
+                            {storeName.toUpperCase()}
                         </div>
 
                     </section>
@@ -603,134 +526,58 @@ const AdminStore = () => {
 
                             <div className="home-category-grid">
 
+                                {storeCategories.map(
+                                    (cat) => (
 
-                                {/* WOMEN */}
+                                        <button
+                                            key={cat.id}
+                                            type="button"
+                                            className={`category-card admin-store-category-button ${
+                                                String(selectedCategory) ===
+                                                String(cat.id)
+                                                    ? "selected"
+                                                    : ""
+                                            }`}
+                                            onClick={() =>
+                                                handleCategoryClick(
+                                                    cat.id
+                                                )
+                                            }
+                                        >
 
-                                <button
-                                    type="button"
-                                    className={`category-card admin-store-category-button ${
-                                        selectedCategory ===
-                                        "women"
-                                            ? "selected"
-                                            : ""
-                                    }`}
-                                    onClick={() =>
-                                        handleCategoryClick(
-                                            "women"
-                                        )
-                                    }
-                                >
+                                            {cat.image || cat.image_url ? (
 
-                                    <div className="category-icon">
-                                        👗
-                                    </div>
+                                                <img
+                                                    src={
+                                                        cat.image ||
+                                                        cat.image_url
+                                                    }
+                                                    alt={cat.name}
+                                                    className="category-icon-img"
+                                                />
 
-                                    <h3>
-                                        Women's Fashion
-                                    </h3>
+                                            ) : (
 
-                                    <p>
-                                        Latest Trends
-                                    </p>
+                                                <div className="category-icon">
+                                                    ✦
+                                                </div>
 
-                                </button>
+                                            )}
 
+                                            <h3>
+                                                {cat.name}
+                                            </h3>
 
-                                {/* MEN */}
+                                            {cat.description && (
+                                                <p>
+                                                    {cat.description}
+                                                </p>
+                                            )}
 
-                                <button
-                                    type="button"
-                                    className={`category-card admin-store-category-button ${
-                                        selectedCategory ===
-                                        "men"
-                                            ? "selected"
-                                            : ""
-                                    }`}
-                                    onClick={() =>
-                                        handleCategoryClick(
-                                            "men"
-                                        )
-                                    }
-                                >
+                                        </button>
 
-                                    <div className="category-icon">
-                                        👔
-                                    </div>
-
-                                    <h3>
-                                        Men's Fashion
-                                    </h3>
-
-                                    <p>
-                                        Smart & Stylish
-                                    </p>
-
-                                </button>
-
-
-                                {/* KIDS */}
-
-                                <button
-                                    type="button"
-                                    className={`category-card admin-store-category-button ${
-                                        selectedCategory ===
-                                        "kids"
-                                            ? "selected"
-                                            : ""
-                                    }`}
-                                    onClick={() =>
-                                        handleCategoryClick(
-                                            "kids"
-                                        )
-                                    }
-                                >
-
-                                    <div className="category-icon">
-                                        🧒
-                                    </div>
-
-                                    <h3>
-                                        Kids Fashion
-                                    </h3>
-
-                                    <p>
-                                        Cute & Comfortable
-                                    </p>
-
-                                </button>
-
-
-                                {/* JEWELLERY */}
-
-                                <button
-                                    type="button"
-                                    className={`category-card admin-store-category-button ${
-                                        selectedCategory ===
-                                        "jewellery"
-                                            ? "selected"
-                                            : ""
-                                    }`}
-                                    onClick={() =>
-                                        handleCategoryClick(
-                                            "jewellery"
-                                        )
-                                    }
-                                >
-
-                                    <div className="category-icon">
-                                        💎
-                                    </div>
-
-                                    <h3>
-                                        Jewellery
-                                    </h3>
-
-                                    <p>
-                                        Elegant Collection
-                                    </p>
-
-                                </button>
-
+                                    )
+                                )}
 
                             </div>
 

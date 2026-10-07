@@ -298,6 +298,9 @@ const getPublicSettings = async (req, res) => {
         const [rows] = await db.promise().query(`
             SELECT
                 store_name,
+                store_email,
+                store_phone,
+                store_address,
                 currency,
                 shipping_threshold
             FROM admin_settings
@@ -311,6 +314,9 @@ const getPublicSettings = async (req, res) => {
                 success: true,
                 settings: {
                     store_name: "",
+                    store_email: "",
+                    store_phone: "",
+                    store_address: "",
                     currency: "",
                     shipping_threshold: ""
                 }

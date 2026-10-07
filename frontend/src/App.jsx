@@ -59,6 +59,10 @@ import {
     AppProvider
 } from "./context/AppContext";
 
+import {
+    StoreProvider
+} from "./context/StoreContext";
+
 
 // =====================================================
 // GLOBAL CSS
@@ -107,6 +111,8 @@ const App = () => {
     return (
 
         <BrowserRouter>
+
+            <StoreProvider>
 
             <AppProvider>
 
@@ -332,6 +338,8 @@ const App = () => {
                 </Routes>
 
             </AppProvider>
+
+            </StoreProvider>
 
         </BrowserRouter>
 

@@ -6,8 +6,9 @@ import Hero from "../components/Hero";
 import CategoryCard from "../components/CategoryCard";
 import ProductCard from "../components/ProductCard";
 
+import { useStore } from "../context/StoreContext";
+
 import {
-    getCategories,
     getProducts,
     getHomeStats,
 } from "../services/api";
@@ -17,12 +18,14 @@ import "../css/home.css";
 const Home = () => {
 
     /* =========================================
-       CATEGORIES
+       STORE CONTEXT (categories come from here)
     ========================================= */
 
-    const [categories, setCategories] = useState([]);
-    const [loadingCategories, setLoadingCategories] =
-        useState(true);
+    const {
+        mainCategories,
+        loading: loadingCategories,
+        storeName,
+    } = useStore();
 
 
     /* =========================================
@@ -56,32 +59,6 @@ const Home = () => {
     useEffect(() => {
 
         const loadHomeData = async () => {
-
-            /* -------------------------------------
-               LOAD CATEGORIES
-            ------------------------------------- */
-
-            try {
-
-                const response = await getCategories();
-
-                setCategories(
-                    response.data?.categories || []
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "Failed to load categories:",
-                    error
-                );
-
-            } finally {
-
-                setLoadingCategories(false);
-
-            }
-
 
             /* -------------------------------------
                LOAD PRODUCTS
@@ -146,16 +123,6 @@ const Home = () => {
         loadHomeData();
 
     }, []);
-
-
-    /* =========================================
-       MAIN CATEGORIES
-    ========================================= */
-
-    const mainCategories = categories.filter(
-        (category) =>
-            category.parent_id === null
-    );
 
 
     return (
@@ -336,7 +303,7 @@ const Home = () => {
                         <div className="home-fashion-content">
 
                             <span>
-                                THE NEW SEASON
+                                THE NEW SEASON {new Date().getFullYear()}
                             </span>
 
                             <h2>
@@ -348,7 +315,7 @@ const Home = () => {
                             <p>
                                 Discover versatile pieces,
                                 timeless essentials and
-                                fresh seasonal styles.
+                                fresh seasonal styles at {storeName}.
                             </p>
 
                             <Link

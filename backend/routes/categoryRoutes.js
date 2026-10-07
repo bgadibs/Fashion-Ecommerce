@@ -1,3 +1,4 @@
+
 const express = require("express");
 
 const router = express.Router();
@@ -7,8 +8,28 @@ const {
     getCategory
 } = require("../controllers/categoryController");
 
-router.get("/", getCategories);
 
-router.get("/:id", getCategory);
+// =====================================================
+// GET ALL CATEGORIES
+// GET /api/categories
+// =====================================================
+
+router.get(
+    "/",
+    getCategories
+);
+
+
+// =====================================================
+// GET CATEGORY BY ID
+// GET /api/categories/:id
+// =====================================================
+
+router.get(
+    "/:id",
+    getCategory
+);
+
 
 module.exports = router;
+

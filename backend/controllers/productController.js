@@ -2,23 +2,20 @@
 const db = require("../config/db");
 
 
-// =====================================================
+// ========================================================
 // GET PRODUCTS
-// =====================================================
+// ========================================================
 
 exports.getProducts = async (req, res) => {
+
     try {
 
         const {
             category,
             featured,
-            search
+            search,
         } = req.query;
 
-
-        // =================================================
-        // BASE QUERY
-        // =================================================
 
         let sql = `
             SELECT
@@ -36,6 +33,7 @@ exports.getProducts = async (req, res) => {
 
                 c.name AS category_name,
                 c.slug AS category_slug,
+                c.parent_id AS category_parent_id,
 
                 (
                     SELECT pi.image_path
@@ -59,43 +57,48 @@ exports.getProducts = async (req, res) => {
         const params = [];
 
 
-        // =================================================
+        // ========================================================
         // CATEGORY FILTER
-        // =================================================
-        // Frontend sends:
-        // /products?category=dresses
-        //
-        // We filter using categories.slug
-        // instead of products.category_id
-        // =================================================
+        // ========================================================
 
         if (category) {
+
+            /*
+             * Exact category filtering.
+             *
+             * Women:
+             * /products?category=women
+             *
+             * Dresses:
+             * /products?category=women-dresses
+             *
+             * This prevents Women from automatically
+             * showing Dresses/Tops products.
+             */
 
             sql += `
                 AND c.slug = ?
             `;
 
             params.push(category);
-
         }
 
 
-        // =================================================
-        // FEATURED FILTER
-        // =================================================
+        // ========================================================
+        // FEATURED
+        // ========================================================
 
         if (featured === "true") {
 
             sql += `
                 AND p.featured = 1
             `;
-
         }
 
 
-        // =================================================
-        // SEARCH FILTER
-        // =================================================
+        // ========================================================
+        // SEARCH
+        // ========================================================
 
         if (search) {
 
@@ -107,29 +110,26 @@ exports.getProducts = async (req, res) => {
                 )
             `;
 
-            const searchValue = `%${search}%`;
+            const searchValue =
+                `%${search}%`;
 
             params.push(
                 searchValue,
                 searchValue,
                 searchValue
             );
-
         }
 
 
-        // =================================================
-        // ORDER PRODUCTS
-        // =================================================
+        // ========================================================
+        // ORDER
+        // ========================================================
 
         sql += `
-            ORDER BY p.created_at DESC
+            ORDER BY
+                p.created_at DESC
         `;
 
-
-        // =================================================
-        // RUN QUERY
-        // =================================================
 
         const [products] =
             await db.promise().query(
@@ -138,15 +138,13 @@ exports.getProducts = async (req, res) => {
             );
 
 
-        // =================================================
-        // RESPONSE
-        // =================================================
-
         res.status(200).json({
-            success: true,
-            products
-        });
 
+            success: true,
+
+            products,
+
+        });
 
     } catch (error) {
 
@@ -156,18 +154,21 @@ exports.getProducts = async (req, res) => {
         );
 
         res.status(500).json({
-            success: false,
-            message: "Failed to load products"
-        });
 
+            success: false,
+
+            message:
+                "Failed to load products",
+
+        });
     }
 };
 
 
 
-// =====================================================
+// ========================================================
 // GET SINGLE PRODUCT
-// =====================================================
+// ========================================================
 
 exports.getProduct = async (req, res) => {
 
@@ -176,17 +177,15 @@ exports.getProduct = async (req, res) => {
         const { id } = req.params;
 
 
-        // =================================================
-        // GET PRODUCT
-        // =================================================
-
         const [products] =
             await db.promise().query(
                 `
                 SELECT
                     p.*,
+
                     c.name AS category_name,
-                    c.slug AS category_slug
+                    c.slug AS category_slug,
+                    c.parent_id AS category_parent_id
 
                 FROM products p
 
@@ -199,26 +198,26 @@ exports.getProduct = async (req, res) => {
             );
 
 
-        // =================================================
-        // PRODUCT NOT FOUND
-        // =================================================
-
         if (products.length === 0) {
 
             return res.status(404).json({
-                success: false,
-                message: "Product not found"
-            });
 
+                success: false,
+
+                message:
+                    "Product not found",
+
+            });
         }
 
 
-        const product = products[0];
+        const product =
+            products[0];
 
 
-        // =================================================
-        // GET PRODUCT IMAGES
-        // =================================================
+        // ========================================================
+        // PRODUCT IMAGES
+        // ========================================================
 
         const [images] =
             await db.promise().query(
@@ -242,9 +241,9 @@ exports.getProduct = async (req, res) => {
             );
 
 
-        // =================================================
-        // GET PRODUCT VARIANTS
-        // =================================================
+        // ========================================================
+        // PRODUCT VARIANTS
+        // ========================================================
 
         const [variants] =
             await db.promise().query(
@@ -263,30 +262,27 @@ exports.getProduct = async (req, res) => {
 
                 WHERE product_id = ?
 
-                ORDER BY id ASC
+                ORDER BY
+                    id ASC
                 `,
                 [product.id]
             );
 
 
-        // =================================================
-        // ATTACH IMAGES AND VARIANTS
-        // =================================================
+        product.images =
+            images;
 
-        product.images = images;
+        product.variants =
+            variants;
 
-        product.variants = variants;
-
-
-        // =================================================
-        // RESPONSE
-        // =================================================
 
         res.status(200).json({
-            success: true,
-            product
-        });
 
+            success: true,
+
+            product,
+
+        });
 
     } catch (error) {
 
@@ -296,10 +292,13 @@ exports.getProduct = async (req, res) => {
         );
 
         res.status(500).json({
-            success: false,
-            message: "Failed to load product"
-        });
 
+            success: false,
+
+            message:
+                "Failed to load product",
+
+        });
     }
 };
 

@@ -17,6 +17,10 @@ import {
     addToWishlist,
 } from "../services/api";
 
+import {
+    useStore,
+} from "../context/StoreContext";
+
 import "../css/products.css";
 
 
@@ -26,6 +30,9 @@ const ProductCard = ({
 
     const navigate =
         useNavigate();
+
+    const { storeName } =
+        useStore();
 
 
     /* =====================================================
@@ -223,7 +230,7 @@ const ProductCard = ({
                         <div className="product-placeholder">
 
                             <span>
-                                FASHION
+                                {storeName.toUpperCase()}
                             </span>
 
                         </div>
@@ -265,7 +272,7 @@ const ProductCard = ({
                 <span className="product-brand">
 
                     {product.brand ||
-                        "FashionHub"}
+                        storeName}
 
                 </span>
 

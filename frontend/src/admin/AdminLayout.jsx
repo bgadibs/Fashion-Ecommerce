@@ -5,12 +5,15 @@ import {
     useLocation
 } from "react-router-dom";
 
+import { useStore } from "../context/StoreContext";
+
 import "../css/admin.css";
 
 const AdminLayout = ({ children }) => {
 
     const navigate = useNavigate();
     const location = useLocation();
+    const { storeName } = useStore();
 
     const adminData = JSON.parse(
         localStorage.getItem("admin") || "null"
@@ -44,7 +47,7 @@ const AdminLayout = ({ children }) => {
                 <div className="admin-logo">
 
                     <h2>
-                        Fashion Store
+                        {storeName}
                     </h2>
 
                     <p>

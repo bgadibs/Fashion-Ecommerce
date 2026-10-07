@@ -1,14 +1,27 @@
 
 import { Link } from "react-router-dom";
+import { useStore } from "../context/StoreContext";
 import "../css/home.css";
 
 const Hero = ({
     homeStats = {},
     loadingStats = false,
 }) => {
+
+    const {
+        storeName,
+        mainCategories,
+    } = useStore();
+
     const products = homeStats.products ?? 0;
     const customers = homeStats.customers ?? 0;
     const rating = homeStats.rating ?? "0.0";
+
+    /* First category for the "Explore" button */
+    const firstCategory =
+        mainCategories.length > 0
+            ? mainCategories[0]
+            : null;
 
     return (
         <section className="hero-section">
@@ -16,7 +29,7 @@ const Hero = ({
             <div className="hero-content">
 
                 <span className="hero-small-title">
-                    ✨ NEW SEASON 2026
+                    ✨ NEW SEASON {new Date().getFullYear()}
                 </span>
 
                 <h1>
@@ -26,8 +39,14 @@ const Hero = ({
                 </h1>
 
                 <p>
-                    Explore the latest fashion trends for women,
-                    men and kids. Find pieces that make every day
+                    Explore the latest fashion trends
+                    {mainCategories.length > 0
+                        ? ` for ${mainCategories
+                              .map((c) => c.name.toLowerCase())
+                              .join(", ")}`
+                        : ""
+                    }.
+                    Find pieces that make every day
                     feel special.
                 </p>
 
@@ -40,12 +59,16 @@ const Hero = ({
                         Shop Collection
                     </Link>
 
-                    <Link
-                        to="/products?category=women"
-                        className="secondary-button"
-                    >
-                        Explore Women
-                    </Link>
+                    {firstCategory && (
+
+                        <Link
+                            to={`/products?category=${firstCategory.id}`}
+                            className="secondary-button"
+                        >
+                            Explore {firstCategory.name}
+                        </Link>
+
+                    )}
 
                 </div>
 
@@ -101,7 +124,7 @@ const Hero = ({
                 <div className="hero-fashion-card">
 
                     <div className="fashion-placeholder">
-                        <span>FASHION</span>
+                        <span>{storeName.toUpperCase()}</span>
 
                         <strong>NEW</strong>
 
@@ -117,11 +140,11 @@ const Hero = ({
                     <span>NEW</span>
 
                     <strong>
-                        20% OFF
+                        {new Date().getFullYear()}
                     </strong>
 
                     <small>
-                        Selected styles
+                        Latest styles
                     </small>
 
                 </div>

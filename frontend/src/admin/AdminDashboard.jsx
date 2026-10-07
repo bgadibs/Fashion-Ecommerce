@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
+import { useStore } from "../context/StoreContext";
 import { getAdminStats } from "../services/api";
 import "../css/admin.css";
 
 const AdminDashboard = () => {
 
     const navigate = useNavigate();
+    const { storeName } = useStore();
 
     const [stats, setStats] = useState({
         totalProducts: 0,
@@ -96,7 +98,7 @@ const AdminDashboard = () => {
                     <div className="dashboard-title">
 
                         <span className="dashboard-eyebrow">
-                            FASHION STORE
+                            {storeName.toUpperCase()}
                         </span>
 
                         <h1>

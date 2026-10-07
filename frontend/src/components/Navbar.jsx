@@ -1,3 +1,4 @@
+
 import {
     Link,
     NavLink,
@@ -24,8 +25,13 @@ import {
 } from "../context/AppContext";
 
 import {
+    useStore,
+} from "../context/StoreContext";
+
+import {
     getCart,
     getWishlist,
+    getCategories,
 } from "../services/api";
 
 import "../css/navbar.css";
@@ -37,6 +43,11 @@ const Navbar = () => {
         user: contextUser,
         logout,
     } = useApp();
+
+    const {
+        storeNameParts,
+        brandInitial,
+    } = useStore();
 
     const navigate = useNavigate();
 
@@ -54,17 +65,25 @@ const Navbar = () => {
     });
 
 
+    const [categories, setCategories] =
+        useState([]);
+
+
     const [menuOpen, setMenuOpen] =
         useState(false);
+
 
     const [search, setSearch] =
         useState("");
 
+
     const [userMenuOpen, setUserMenuOpen] =
         useState(false);
 
+
     const [cartCount, setCartCount] =
         useState(0);
+
 
     const [wishlistCount, setWishlistCount] =
         useState(0);
@@ -72,6 +91,76 @@ const Navbar = () => {
 
     const userMenuRef =
         useRef(null);
+
+
+    /* =====================================================
+       LOAD CATEGORIES
+    ===================================================== */
+
+    useEffect(() => {
+
+        const loadCategories = async () => {
+
+            try {
+
+                const response =
+                    await getCategories();
+
+                const data =
+                    response.data?.categories || [];
+
+                setCategories(
+                    Array.isArray(data)
+                        ? data
+                        : []
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to load navbar categories:",
+                    error
+                );
+
+                setCategories([]);
+
+            }
+
+        };
+
+
+        loadCategories();
+
+    }, []);
+
+
+    /* =====================================================
+       MAIN CATEGORIES ONLY
+       
+       Only categories where parent_id is NULL
+       
+       Example:
+       Women
+       Men
+       Kids
+
+       Subcategories such as:
+       Dresses
+       Tops
+       Shirts
+       T-Shirts
+       Boys
+       Girls
+
+       will NOT appear in the navbar.
+    ===================================================== */
+
+    const mainCategories =
+        categories.filter(
+            (category) =>
+                category.parent_id === null ||
+                category.parent_id === undefined
+        );
 
 
     /* =====================================================
@@ -160,12 +249,15 @@ const Navbar = () => {
             const items =
                 response.data?.items || [];
 
-            const count = items.reduce(
-                (total, item) =>
-                    total +
-                    Number(item.quantity || 0),
-                0
-            );
+            const count =
+                items.reduce(
+                    (total, item) =>
+                        total +
+                        Number(
+                            item.quantity || 0
+                        ),
+                    0
+                );
 
             setCartCount(count);
 
@@ -365,7 +457,7 @@ const Navbar = () => {
 
             navigate(
                 `/products?search=${encodeURIComponent(
-                    search
+                    search.trim()
                 )}`
             );
 
@@ -442,6 +534,10 @@ const Navbar = () => {
     };
 
 
+    /* =====================================================
+       RENDER
+    ===================================================== */
+
     return (
 
         <header className="navbar-wrapper">
@@ -482,16 +578,20 @@ const Navbar = () => {
                 >
 
                     <span className="brand-icon">
-                        B
+                        {brandInitial}
                     </span>
 
                     <span className="brand-text">
 
-                        Bgadi
+                        {storeNameParts.first}
 
-                        <span>
-                            Fashion
-                        </span>
+                        {storeNameParts.second && (
+
+                            <span>
+                                {storeNameParts.second}
+                            </span>
+
+                        )}
 
                     </span>
 
@@ -506,10 +606,9 @@ const Navbar = () => {
                     className="mobile-menu-button"
                     type="button"
                     onClick={() =>
-                        setMenuOpen(
-                            !menuOpen
-                        )
+                        setMenuOpen(!menuOpen)
                     }
+                    aria-label="Toggle navigation menu"
                 >
 
                     {menuOpen ? (
@@ -523,6 +622,10 @@ const Navbar = () => {
 
                 {/* =================================================
                     NAVIGATION
+
+                    NO DROPDOWN
+                    NO SUBMENU
+                    NO ARROW
                 ================================================= */}
 
                 <div
@@ -532,6 +635,9 @@ const Navbar = () => {
                             : ""
                     }`}
                 >
+
+
+                    {/* HOME */}
 
                     <NavLink
                         to="/"
@@ -546,36 +652,43 @@ const Navbar = () => {
                     </NavLink>
 
 
+                    {/* =================================================
+                        MAIN CATEGORIES
+
+                        Women -> /products?category=women
+                        Men   -> /products?category=men
+                        Kids  -> /products?category=kids
+                    ================================================= */}
+
+                    {mainCategories.map((cat) => (
+
+                        <NavLink
+                            key={cat.id}
+                            to={`/products?category=${encodeURIComponent(
+                                cat.slug
+                            )}`}
+                            className={({ isActive }) =>
+                                isActive
+                                    ? "nav-link active"
+                                    : "nav-link"
+                            }
+                            onClick={closeMenu}
+                        >
+                            {cat.name}
+                        </NavLink>
+
+                    ))}
+
+
+                    {/* NEW ARRIVALS */}
+
                     <NavLink
-                        to="/products?category=women"
-                        className="nav-link"
-                        onClick={closeMenu}
-                    >
-                        Women
-                    </NavLink>
-
-
-                    <NavLink
-                        to="/products?category=men"
-                        className="nav-link"
-                        onClick={closeMenu}
-                    >
-                        Men
-                    </NavLink>
-
-
-                    <NavLink
-                        to="/products?category=kids"
-                        className="nav-link"
-                        onClick={closeMenu}
-                    >
-                        Kids
-                    </NavLink>
-
-
-                    <NavLink
-                        to="/products"
-                        className="nav-link"
+                        to="/products?featured=true"
+                        className={({ isActive }) =>
+                            isActive
+                                ? "nav-link active"
+                                : "nav-link"
+                        }
                         onClick={closeMenu}
                     >
                         New Arrivals
@@ -692,10 +805,6 @@ const Navbar = () => {
 
                     {user ? (
 
-                        /* =============================================
-                           LOGGED IN USER
-                        ============================================= */
-
                         <div
                             className="user-menu"
                             ref={userMenuRef}
@@ -761,10 +870,6 @@ const Navbar = () => {
 
                     ) : (
 
-                        /* =============================================
-                           NOT LOGGED IN
-                        ============================================= */
-
                         <div className="auth-actions">
 
                             <Link
@@ -778,8 +883,6 @@ const Navbar = () => {
                                 Login
 
                             </Link>
-
-
 
                         </div>
 
@@ -797,3 +900,4 @@ const Navbar = () => {
 
 
 export default Navbar;
+
