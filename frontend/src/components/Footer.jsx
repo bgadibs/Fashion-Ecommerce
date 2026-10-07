@@ -1,4 +1,6 @@
 
+import { useEffect, useState } from "react";
+
 import { Link } from "react-router-dom";
 
 import {
@@ -11,6 +13,10 @@ import {
 
 import { useStore } from "../context/StoreContext";
 
+import {
+    getCategories,
+} from "../services/api";
+
 import "../css/footer.css";
 
 
@@ -20,9 +26,179 @@ const Footer = () => {
         settings,
         storeName,
         storeNameParts,
-        mainCategories,
     } = useStore();
 
+
+    /* =====================================================
+       STATES
+    ===================================================== */
+
+    const [categories, setCategories] =
+        useState([]);
+
+
+    /* =====================================================
+       LOAD CATEGORIES
+    ===================================================== */
+
+    useEffect(() => {
+
+        const loadCategories = async () => {
+
+            try {
+
+                const response =
+                    await getCategories();
+
+
+                console.log(
+                    "FOOTER CATEGORY API RESPONSE:",
+                    response.data
+                );
+
+
+                /*
+                    Supports different API response formats:
+
+                    {
+                        categories: [...]
+                    }
+
+                    OR
+
+                    {
+                        data: [...]
+                    }
+
+                    OR
+
+                    [...]
+                */
+
+                const data =
+                    response.data?.categories ||
+                    response.data?.data ||
+                    response.data ||
+                    [];
+
+
+                const categoryList =
+                    Array.isArray(data)
+                        ? data
+                        : [];
+
+
+                console.log(
+                    "FOOTER CATEGORIES:",
+                    categoryList
+                );
+
+
+                setCategories(
+                    categoryList
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to load footer categories:",
+                    error
+                );
+
+                setCategories([]);
+
+            }
+
+        };
+
+
+        loadCategories();
+
+    }, []);
+
+
+    /* =====================================================
+       MAIN CATEGORIES ONLY
+
+       Example:
+
+       Women
+       Men
+       Kids
+
+       Subcategories such as:
+
+       Dresses
+       Tops
+       Shirts
+       Boys
+       Girls
+
+       will NOT appear.
+    ===================================================== */
+
+    const mainCategories =
+        categories.filter((category) => {
+
+            const parentId =
+                category.parent_id;
+
+
+            return (
+                parentId === null ||
+                parentId === undefined ||
+                parentId === 0 ||
+                parentId === "0" ||
+                parentId === ""
+            );
+
+        });
+
+
+    /* =====================================================
+       FALLBACK CATEGORIES
+
+       Used only if the API does not return
+       the main categories.
+
+       The actual categories should come
+       from the database.
+    ===================================================== */
+
+    const displayCategories =
+        mainCategories.length > 0
+            ? mainCategories
+            : [
+                {
+                    id: "women",
+                    name: "Women",
+                    slug: "women",
+                },
+                {
+                    id: "men",
+                    name: "Men",
+                    slug: "men",
+                },
+                {
+                    id: "kids",
+                    name: "Kids",
+                    slug: "kids",
+                },
+            ];
+
+
+    /* =====================================================
+       STORE SETTINGS SAFETY
+    ===================================================== */
+
+    const safeSettings =
+        settings || {};
+
+
+    /* =====================================================
+       RENDER
+    ===================================================== */
 
     return (
 
@@ -47,9 +223,9 @@ const Footer = () => {
                         className="footer-logo"
                     >
 
-                        {storeNameParts.first}
+                        {storeNameParts?.first || "Fashion"}
 
-                        {storeNameParts.second && (
+                        {storeNameParts?.second && (
 
                             <span>
                                 {storeNameParts.second}
@@ -62,10 +238,10 @@ const Footer = () => {
 
                     <p>
 
-                        Discover beautiful fashion
+                        Discover beautiful fashion{" "}
 
-                        {mainCategories.length > 0
-                            ? ` for ${mainCategories
+                        {displayCategories.length > 0
+                            ? `for ${displayCategories
                                 .map((c) =>
                                     c.name.toLowerCase()
                                 )
@@ -79,19 +255,32 @@ const Footer = () => {
                     </p>
 
 
-                    {/* SOCIAL ICONS */}
+                    {/* =================================================
+                        SOCIAL ICONS
+                    ================================================= */}
 
                     <div className="social-icons">
 
-                        <a href="#instagram">
+                        <a
+                            href="#instagram"
+                            aria-label="Instagram"
+                        >
                             <FiInstagram />
                         </a>
 
-                        <a href="#facebook">
+
+                        <a
+                            href="#facebook"
+                            aria-label="Facebook"
+                        >
                             <FiFacebook />
                         </a>
 
-                        <a href="#twitter">
+
+                        <a
+                            href="#twitter"
+                            aria-label="Twitter"
+                        >
                             <FiTwitter />
                         </a>
 
@@ -111,21 +300,27 @@ const Footer = () => {
                     </h3>
 
 
-                    {mainCategories.map((cat) => (
+                    {displayCategories.map((cat) => (
 
                         <Link
                             key={cat.id}
                             to={`/products?category=${encodeURIComponent(
-                                cat.slug
+                                cat.slug || cat.name
                             )}`}
                         >
+
                             {cat.name}
+
                         </Link>
 
                     ))}
 
 
-                    <Link to="/products?featured=true">
+                    {/* NEW ARRIVALS */}
+
+                    <Link
+                        to="/products?featured=true"
+                    >
                         New Arrivals
                     </Link>
 
@@ -176,37 +371,53 @@ const Footer = () => {
                     </h3>
 
 
-                    {settings.store_email && (
+                    {/* EMAIL */}
+
+                    {safeSettings.store_email && (
 
                         <p>
 
                             <FiMail />
 
-                            {settings.store_email}
+                            <span>
+                                {safeSettings.store_email}
+                            </span>
 
                         </p>
 
                     )}
 
 
-                    {settings.store_phone && (
+                    {/* PHONE */}
+
+                    {safeSettings.store_phone && (
 
                         <p>
 
                             <FiPhone />
 
-                            {settings.store_phone}
+                            <span>
+                                {safeSettings.store_phone}
+                            </span>
 
                         </p>
 
                     )}
 
 
-                    {settings.store_address && (
+                    {/* ADDRESS */}
+
+                    {safeSettings.store_address && (
 
                         <p>
 
-                            📍 {settings.store_address}
+                            <span>
+                                📍
+                            </span>
+
+                            <span>
+                                {safeSettings.store_address}
+                            </span>
 
                         </p>
 
@@ -227,7 +438,7 @@ const Footer = () => {
 
                     © {new Date().getFullYear()}{" "}
 
-                    {storeName}.
+                    {storeName || "Fashion Store"}.
 
                     All rights reserved.
 
@@ -236,13 +447,14 @@ const Footer = () => {
 
                 <div>
 
-                    <span>
+                    <Link to="/privacy">
                         Privacy Policy
-                    </span>
+                    </Link>
 
-                    <span>
+
+                    <Link to="/terms">
                         Terms & Conditions
-                    </span>
+                    </Link>
 
                 </div>
 
@@ -256,4 +468,3 @@ const Footer = () => {
 
 
 export default Footer;
-

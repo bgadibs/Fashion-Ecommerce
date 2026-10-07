@@ -57,11 +57,13 @@ const Navbar = () => {
     ===================================================== */
 
     const [user, setUser] = useState(() => {
-
-        return JSON.parse(
-            localStorage.getItem("user") || "null"
-        );
-
+        try {
+            return JSON.parse(
+                localStorage.getItem("user") || "null"
+            );
+        } catch (error) {
+            return null;
+        }
     });
 
 
@@ -106,14 +108,53 @@ const Navbar = () => {
                 const response =
                     await getCategories();
 
-                const data =
-                    response.data?.categories || [];
+                console.log(
+                    "NAVBAR CATEGORY API RESPONSE:",
+                    response.data
+                );
 
-                setCategories(
+
+                /*
+                    Supports different API response formats:
+
+                    {
+                        categories: [...]
+                    }
+
+                    OR
+
+                    {
+                        data: [...]
+                    }
+
+                    OR
+
+                    [...]
+                */
+
+                const data =
+                    response.data?.categories ||
+                    response.data?.data ||
+                    response.data ||
+                    [];
+
+
+                const categoryList =
                     Array.isArray(data)
                         ? data
-                        : []
+                        : [];
+
+
+                console.log(
+                    "NAVBAR CATEGORIES:",
+                    categoryList
                 );
+
+
+                setCategories(
+                    categoryList
+                );
+
 
             } catch (error) {
 
@@ -136,15 +177,15 @@ const Navbar = () => {
 
     /* =====================================================
        MAIN CATEGORIES ONLY
-       
-       Only categories where parent_id is NULL
-       
-       Example:
+
+       Main categories:
+
        Women
        Men
        Kids
 
-       Subcategories such as:
+       Subcategories:
+
        Dresses
        Tops
        Shirts
@@ -152,15 +193,25 @@ const Navbar = () => {
        Boys
        Girls
 
-       will NOT appear in the navbar.
+       will NOT appear.
     ===================================================== */
 
     const mainCategories =
-        categories.filter(
-            (category) =>
-                category.parent_id === null ||
-                category.parent_id === undefined
-        );
+        categories.filter((category) => {
+
+            const parentId =
+                category.parent_id;
+
+
+            return (
+                parentId === null ||
+                parentId === undefined ||
+                parentId === 0 ||
+                parentId === "0" ||
+                parentId === ""
+            );
+
+        });
 
 
     /* =====================================================
@@ -171,11 +222,21 @@ const Navbar = () => {
 
         const handleUserUpdated = () => {
 
-            const savedUser = JSON.parse(
-                localStorage.getItem("user") || "null"
-            );
+            try {
 
-            setUser(savedUser);
+                const savedUser =
+                    JSON.parse(
+                        localStorage.getItem("user") ||
+                        "null"
+                    );
+
+                setUser(savedUser);
+
+            } catch (error) {
+
+                setUser(null);
+
+            }
 
             setUserMenuOpen(false);
 
@@ -212,11 +273,21 @@ const Navbar = () => {
 
         } else {
 
-            const savedUser = JSON.parse(
-                localStorage.getItem("user") || "null"
-            );
+            try {
 
-            setUser(savedUser);
+                const savedUser =
+                    JSON.parse(
+                        localStorage.getItem("user") ||
+                        "null"
+                    );
+
+                setUser(savedUser);
+
+            } catch (error) {
+
+                setUser(null);
+
+            }
 
         }
 
@@ -232,6 +303,7 @@ const Navbar = () => {
         const token =
             localStorage.getItem("token");
 
+
         if (!token) {
 
             setCartCount(0);
@@ -246,8 +318,10 @@ const Navbar = () => {
             const response =
                 await getCart();
 
+
             const items =
                 response.data?.items || [];
+
 
             const count =
                 items.reduce(
@@ -259,7 +333,9 @@ const Navbar = () => {
                     0
                 );
 
+
             setCartCount(count);
+
 
         } catch (error) {
 
@@ -284,6 +360,7 @@ const Navbar = () => {
         const token =
             localStorage.getItem("token");
 
+
         if (!token) {
 
             setWishlistCount(0);
@@ -298,14 +375,19 @@ const Navbar = () => {
             const response =
                 await getWishlist();
 
+
             const wishlist =
                 response.data?.wishlist ||
                 response.data?.items ||
                 [];
 
+
             setWishlistCount(
-                wishlist.length
+                Array.isArray(wishlist)
+                    ? wishlist.length
+                    : 0
             );
+
 
         } catch (error) {
 
@@ -330,11 +412,13 @@ const Navbar = () => {
         if (user) {
 
             loadCartCount();
+
             loadWishlistCount();
 
         } else {
 
             setCartCount(0);
+
             setWishlistCount(0);
 
         }
@@ -461,6 +545,7 @@ const Navbar = () => {
                 )}`
             );
 
+
             setSearch("");
 
             setMenuOpen(false);
@@ -478,19 +563,26 @@ const Navbar = () => {
 
         setUserMenuOpen(false);
 
+
         logout();
 
+
         localStorage.removeItem("user");
+
         localStorage.removeItem("token");
+
 
         setUser(null);
 
         setCartCount(0);
+
         setWishlistCount(0);
+
 
         window.dispatchEvent(
             new Event("userUpdated")
         );
+
 
         navigate("/");
 
@@ -581,9 +673,11 @@ const Navbar = () => {
                         {brandInitial}
                     </span>
 
+
                     <span className="brand-text">
 
                         {storeNameParts.first}
+
 
                         {storeNameParts.second && (
 
@@ -622,10 +716,6 @@ const Navbar = () => {
 
                 {/* =================================================
                     NAVIGATION
-
-                    NO DROPDOWN
-                    NO SUBMENU
-                    NO ARROW
                 ================================================= */}
 
                 <div
@@ -653,34 +743,93 @@ const Navbar = () => {
 
 
                     {/* =================================================
-                        MAIN CATEGORIES
+                        DYNAMIC MAIN CATEGORIES
 
-                        Women -> /products?category=women
-                        Men   -> /products?category=men
-                        Kids  -> /products?category=kids
+                        Women
+                        Men
+                        Kids
+
+                        are loaded from database.
                     ================================================= */}
 
-                    {mainCategories.map((cat) => (
+                    {mainCategories.length > 0 ? (
 
-                        <NavLink
-                            key={cat.id}
-                            to={`/products?category=${encodeURIComponent(
-                                cat.slug
-                            )}`}
-                            className={({ isActive }) =>
-                                isActive
-                                    ? "nav-link active"
-                                    : "nav-link"
-                            }
-                            onClick={closeMenu}
-                        >
-                            {cat.name}
-                        </NavLink>
+                        mainCategories.map((cat) => (
 
-                    ))}
+                            <NavLink
+                                key={cat.id}
+                                to={`/products?category=${encodeURIComponent(
+                                    cat.slug || cat.name
+                                )}`}
+                                className={({ isActive }) =>
+                                    isActive
+                                        ? "nav-link active"
+                                        : "nav-link"
+                                }
+                                onClick={closeMenu}
+                            >
+
+                                {cat.name}
+
+                            </NavLink>
+
+                        ))
+
+                    ) : (
+
+                        /*
+                            Temporary fallback.
+
+                            This only appears if the API
+                            returns no main categories.
+                        */
+
+                        <>
+                            <NavLink
+                                to="/products?category=women"
+                                className={({ isActive }) =>
+                                    isActive
+                                        ? "nav-link active"
+                                        : "nav-link"
+                                }
+                                onClick={closeMenu}
+                            >
+                                Women
+                            </NavLink>
 
 
-                    {/* NEW ARRIVALS */}
+                            <NavLink
+                                to="/products?category=men"
+                                className={({ isActive }) =>
+                                    isActive
+                                        ? "nav-link active"
+                                        : "nav-link"
+                                }
+                                onClick={closeMenu}
+                            >
+                                Men
+                            </NavLink>
+
+
+                            <NavLink
+                                to="/products?category=kids"
+                                className={({ isActive }) =>
+                                    isActive
+                                        ? "nav-link active"
+                                        : "nav-link"
+                                }
+                                onClick={closeMenu}
+                            >
+                                Kids
+                            </NavLink>
+                        </>
+
+                    )}
+
+
+                    {/* =================================================
+                        NEW ARRIVALS
+                    ================================================= */}
 
                     <NavLink
                         to="/products?featured=true"
@@ -707,6 +856,7 @@ const Navbar = () => {
                 >
 
                     <FiSearch />
+
 
                     <input
                         type="text"
@@ -743,6 +893,7 @@ const Navbar = () => {
 
                             <FiHeart />
 
+
                             {wishlistCount > 0 && (
 
                                 <span className="wishlist-count">
@@ -756,6 +907,7 @@ const Navbar = () => {
                             )}
 
                         </div>
+
 
                         <span>
                             Wishlist
@@ -778,6 +930,7 @@ const Navbar = () => {
 
                             <FiShoppingBag />
 
+
                             {cartCount > 0 && (
 
                                 <span className="cart-count">
@@ -791,6 +944,7 @@ const Navbar = () => {
                             )}
 
                         </div>
+
 
                         <span>
                             Bag
@@ -822,6 +976,7 @@ const Navbar = () => {
 
                                 <FiUser />
 
+
                                 <span>
                                     {user.name}
                                 </span>
@@ -832,6 +987,7 @@ const Navbar = () => {
                             {userMenuOpen && (
 
                                 <div className="user-dropdown">
+
 
                                     <button
                                         type="button"
@@ -900,4 +1056,3 @@ const Navbar = () => {
 
 
 export default Navbar;
-
