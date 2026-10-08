@@ -1,4 +1,30 @@
+
 const db = require("../config/db");
+
+// =====================================================
+// HELPER: GET EFFECTIVE PRICE
+// =====================================================
+
+const getEffectivePrice = (product, variant = null) => {
+    if (
+        variant &&
+        variant.price_override !== null &&
+        variant.price_override !== undefined
+    ) {
+        return Number(variant.price_override);
+    }
+
+    if (
+        product.sale_price !== null &&
+        product.sale_price !== undefined &&
+        Number(product.sale_price) > 0
+    ) {
+        return Number(product.sale_price);
+    }
+
+    return Number(product.base_price);
+};
+
 
 // =====================================================
 // GET CART
@@ -9,25 +35,30 @@ exports.getCart = async (req, res) => {
         const [items] = await db.promise().query(
             `SELECT
                 ci.id,
+                ci.user_id,
                 ci.product_id,
+                ci.product_variant_id,
                 ci.quantity,
+                ci.created_at,
 
-                pv.id AS variant_id,
                 pv.size,
                 pv.color,
                 pv.stock_quantity,
                 pv.price_override,
 
-                p.id AS product_id,
                 p.name,
                 p.base_price,
                 p.sale_price,
+                p.status,
 
                 (
                     SELECT pi.image_path
                     FROM product_images pi
                     WHERE pi.product_id = p.id
-                    ORDER BY pi.is_primary DESC, pi.sort_order ASC
+                    ORDER BY
+                        pi.is_primary DESC,
+                        pi.sort_order ASC,
+                        pi.id ASC
                     LIMIT 1
                 ) AS image
 
@@ -48,31 +79,74 @@ exports.getCart = async (req, res) => {
         let total = 0;
 
         const cart = items.map((item) => {
-            const price =
-                item.price_override ??
-                item.sale_price ??
-                item.base_price;
+            const price = getEffectivePrice(
+                item,
+                item.product_variant_id
+                    ? item
+                    : null
+            );
 
-            const lineTotal =
-                Number(price) * Number(item.quantity);
+            const quantity = Number(item.quantity);
+
+            const lineTotal = price * quantity;
 
             total += lineTotal;
 
             return {
-                ...item,
+                id: item.id,
+
+                product_id: item.product_id,
+
+                product_variant_id:
+                    item.product_variant_id,
+
+                name: item.name,
+
+                size: item.size || null,
+
+                color: item.color || null,
+
+                quantity,
+
+                stock_quantity:
+                    item.product_variant_id
+                        ? Number(item.stock_quantity)
+                        : null,
+
+                base_price:
+                    Number(item.base_price),
+
+                sale_price:
+                    item.sale_price !== null
+                        ? Number(item.sale_price)
+                        : null,
+
                 price,
+
                 lineTotal,
+
+                image: item.image || null,
+
+                status: item.status,
             };
         });
 
         res.json({
             success: true,
             items: cart,
-            total,
+            total: Number(total.toFixed(2)),
+            itemCount: cart.reduce(
+                (sum, item) =>
+                    sum + Number(item.quantity),
+                0
+            ),
         });
 
     } catch (error) {
-        console.error("GET CART ERROR:", error);
+        console.error(
+            "GET CART ERROR:",
+            error
+        );
 
         res.status(500).json({
             success: false,
@@ -94,20 +168,22 @@ exports.addToCart = async (req, res) => {
             quantity,
         } = req.body;
 
+        const productId = Number(product_id);
+        const variantId =
+            product_variant_id !== null &&
+            product_variant_id !== undefined &&
+            product_variant_id !== ""
+                ? Number(product_variant_id)
+                : null;
+
         const qty = Number(quantity) || 1;
 
-        if (qty < 1) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid quantity",
-            });
-        }
 
-        /*
-         * PRODUCT ID IS REQUIRED
-         */
+        // =================================================
+        // VALIDATE PRODUCT ID
+        // =================================================
 
-        if (!product_id) {
+        if (!productId || productId < 1) {
             return res.status(400).json({
                 success: false,
                 message: "Product ID is required",
@@ -116,20 +192,35 @@ exports.addToCart = async (req, res) => {
 
 
         // =================================================
-        // CHECK PRODUCT
+        // VALIDATE QUANTITY
         // =================================================
 
-        const [products] = await db.promise().query(
-            `SELECT
-                id,
-                name,
-                base_price,
-                sale_price,
-                status
-             FROM products
-             WHERE id = ?`,
-            [product_id]
-        );
+        if (!Number.isInteger(qty) || qty < 1) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Quantity must be at least 1",
+            });
+        }
+
+
+        // =================================================
+        // GET PRODUCT
+        // =================================================
+
+        const [products] =
+            await db.promise().query(
+                `SELECT
+                    id,
+                    name,
+                    base_price,
+                    sale_price,
+                    status
+                 FROM products
+                 WHERE id = ?`,
+                [productId]
+            );
+
 
         if (products.length === 0) {
             return res.status(404).json({
@@ -138,8 +229,13 @@ exports.addToCart = async (req, res) => {
             });
         }
 
+
         const product = products[0];
 
+
+        // =================================================
+        // CHECK PRODUCT STATUS
+        // =================================================
 
         if (
             product.status &&
@@ -147,18 +243,18 @@ exports.addToCart = async (req, res) => {
         ) {
             return res.status(400).json({
                 success: false,
-                message: "Product is not available",
+                message:
+                    "Product is not available",
             });
         }
 
 
         // =================================================
-        // VARIANT SELECTED
+        // CHECK WHETHER PRODUCT HAS VARIANTS
         // =================================================
 
-        if (product_variant_id) {
-
-            const [variants] = await db.promise().query(
+        const [variants] =
+            await db.promise().query(
                 `SELECT
                     id,
                     product_id,
@@ -167,41 +263,86 @@ exports.addToCart = async (req, res) => {
                     stock_quantity,
                     price_override
                  FROM product_variants
-                 WHERE id = ?
-                 AND product_id = ?`,
-                [
-                    product_variant_id,
-                    product_id,
-                ]
+                 WHERE product_id = ?`,
+                [productId]
             );
 
-            if (variants.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Product variant not found",
-                });
-            }
 
-            const variant = variants[0];
+        const hasVariants =
+            variants.length > 0;
 
 
-            // =============================================
-            // CHECK VARIANT STOCK
-            // =============================================
+        // =================================================
+        // PRODUCT HAS VARIANTS
+        // =================================================
 
-            if (
-                Number(variant.stock_quantity) < qty
-            ) {
+        if (hasVariants) {
+
+            // -------------------------------------------------
+            // VARIANT IS REQUIRED
+            // -------------------------------------------------
+
+            if (!variantId) {
                 return res.status(400).json({
                     success: false,
-                    message: "Insufficient stock",
+                    message:
+                        "Please select a size or color before adding the product to cart",
                 });
             }
 
 
-            // =============================================
-            // CHECK EXISTING VARIANT CART ITEM
-            // =============================================
+            // -------------------------------------------------
+            // FIND SELECTED VARIANT
+            // -------------------------------------------------
+
+            const variant =
+                variants.find(
+                    (item) =>
+                        Number(item.id) ===
+                        variantId
+                );
+
+
+            if (!variant) {
+                return res.status(404).json({
+                    success: false,
+                    message:
+                        "Selected product variant not found",
+                });
+            }
+
+
+            // -------------------------------------------------
+            // CHECK VARIANT STOCK
+            // -------------------------------------------------
+
+            const stock =
+                Number(
+                    variant.stock_quantity || 0
+                );
+
+
+            if (stock <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "Selected variant is out of stock",
+                });
+            }
+
+
+            if (qty > stock) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        `Only ${stock} item(s) available for the selected variant`,
+                });
+            }
+
+
+            // -------------------------------------------------
+            // CHECK EXISTING CART ITEM
+            // -------------------------------------------------
 
             const [existing] =
                 await db.promise().query(
@@ -211,33 +352,43 @@ exports.addToCart = async (req, res) => {
                      FROM cart_items
                      WHERE user_id = ?
                      AND product_id = ?
-                     AND product_variant_id = ?`,
+                     AND product_variant_id = ?
+                     LIMIT 1`,
                     [
                         req.user.id,
-                        product_id,
-                        product_variant_id,
+                        productId,
+                        variantId,
                     ]
                 );
 
 
             if (existing.length > 0) {
 
+                const currentQuantity =
+                    Number(
+                        existing[0].quantity
+                    );
+
                 const newQuantity =
-                    Number(existing[0].quantity) +
-                    qty;
+                    currentQuantity + qty;
 
 
-                if (
-                    newQuantity >
-                    Number(variant.stock_quantity)
-                ) {
+                // -------------------------------------------------
+                // CHECK TOTAL QUANTITY AGAINST STOCK
+                // -------------------------------------------------
+
+                if (newQuantity > stock) {
                     return res.status(400).json({
                         success: false,
                         message:
-                            "Requested quantity exceeds available stock",
+                            `Only ${stock} item(s) available for the selected variant`,
                     });
                 }
 
+
+                // -------------------------------------------------
+                // UPDATE EXISTING ITEM
+                // -------------------------------------------------
 
                 await db.promise().query(
                     `UPDATE cart_items
@@ -251,223 +402,151 @@ exports.addToCart = async (req, res) => {
                     ]
                 );
 
-            } else {
 
-                await db.promise().query(
-                    `INSERT INTO cart_items
-                    (
-                        user_id,
-                        product_id,
-                        product_variant_id,
-                        quantity
-                    )
-                    VALUES (?, ?, ?, ?)`,
-                    [
-                        req.user.id,
-                        product_id,
-                        product_variant_id,
-                        qty,
-                    ]
-                );
+                return res.status(200).json({
+                    success: true,
+                    message:
+                        "Cart quantity updated",
+                });
             }
+
+
+            // -------------------------------------------------
+            // INSERT NEW VARIANT ITEM
+            // -------------------------------------------------
+
+            await db.promise().query(
+                `INSERT INTO cart_items
+                (
+                    user_id,
+                    product_id,
+                    product_variant_id,
+                    quantity
+                )
+                VALUES (?, ?, ?, ?)`,
+                [
+                    req.user.id,
+                    productId,
+                    variantId,
+                    qty,
+                ]
+            );
 
 
             return res.status(201).json({
                 success: true,
-                message: "Product added to cart",
+                message:
+                    "Product added to cart",
             });
         }
 
 
         // =================================================
-        // NO VARIANT SELECTED
-        // =================================================
-        //
-        // Size / Color are optional.
-        //
-        // If the customer does not select a variant,
-        // we allow the product to be added directly.
-        //
-        // For products that have variants, calculate
-        // total available stock from all variants.
+        // PRODUCT WITHOUT VARIANTS
         // =================================================
 
-        const [variantStock] =
-            await db.promise().query(
-                `SELECT
-                    COALESCE(
-                        SUM(stock_quantity),
-                        0
-                    ) AS total_stock
-                 FROM product_variants
-                 WHERE product_id = ?`,
-                [product_id]
-            );
+        // If a product has no variants, variant ID should
+        // not be supplied.
 
-        const totalVariantStock =
-            Number(
-                variantStock[0]?.total_stock || 0
-            );
-
-
-        // =============================================
-        // PRODUCT HAS VARIANTS
-        // =============================================
-
-        if (totalVariantStock > 0) {
-
-            const [existing] =
-                await db.promise().query(
-                    `SELECT
-                        id,
-                        quantity
-                     FROM cart_items
-                     WHERE user_id = ?
-                     AND product_id = ?
-                     AND product_variant_id IS NULL`,
-                    [
-                        req.user.id,
-                        product_id,
-                    ]
-                );
-
-
-            const existingQuantity =
-                existing.length > 0
-                    ? Number(existing[0].quantity)
-                    : 0;
-
-
-            const newQuantity =
-                existingQuantity + qty;
-
-
-            if (
-                newQuantity >
-                totalVariantStock
-            ) {
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Requested quantity exceeds available stock",
-                });
-            }
-
-
-            if (existing.length > 0) {
-
-                await db.promise().query(
-                    `UPDATE cart_items
-                     SET quantity = ?
-                     WHERE id = ?
-                     AND user_id = ?`,
-                    [
-                        newQuantity,
-                        existing[0].id,
-                        req.user.id,
-                    ]
-                );
-
-            } else {
-
-                await db.promise().query(
-                    `INSERT INTO cart_items
-                    (
-                        user_id,
-                        product_id,
-                        product_variant_id,
-                        quantity
-                    )
-                    VALUES (?, ?, NULL, ?)`,
-                    [
-                        req.user.id,
-                        product_id,
-                        qty,
-                    ]
-                );
-            }
-
-        } else {
-
-            // =============================================
-            // PRODUCT WITHOUT VARIANTS
-            // =============================================
-            //
-            // If there are no variants, we still allow
-            // the product to be added.
-            //
-            // Your products table currently does not have
-            // a direct stock_quantity field, so there is
-            // no variant stock to validate here.
-            // =============================================
-
-            const [existing] =
-                await db.promise().query(
-                    `SELECT
-                        id,
-                        quantity
-                     FROM cart_items
-                     WHERE user_id = ?
-                     AND product_id = ?
-                     AND product_variant_id IS NULL`,
-                    [
-                        req.user.id,
-                        product_id,
-                    ]
-                );
-
-
-            if (existing.length > 0) {
-
-                const newQuantity =
-                    Number(existing[0].quantity) +
-                    qty;
-
-
-                await db.promise().query(
-                    `UPDATE cart_items
-                     SET quantity = ?
-                     WHERE id = ?
-                     AND user_id = ?`,
-                    [
-                        newQuantity,
-                        existing[0].id,
-                        req.user.id,
-                    ]
-                );
-
-            } else {
-
-                await db.promise().query(
-                    `INSERT INTO cart_items
-                    (
-                        user_id,
-                        product_id,
-                        product_variant_id,
-                        quantity
-                    )
-                    VALUES (?, ?, NULL, ?)`,
-                    [
-                        req.user.id,
-                        product_id,
-                        qty,
-                    ]
-                );
-            }
+        if (variantId) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "This product does not have variants",
+            });
         }
 
 
-        res.status(201).json({
+        // =================================================
+        // CHECK EXISTING NON-VARIANT CART ITEM
+        // =================================================
+
+        const [existing] =
+            await db.promise().query(
+                `SELECT
+                    id,
+                    quantity
+                 FROM cart_items
+                 WHERE user_id = ?
+                 AND product_id = ?
+                 AND product_variant_id IS NULL
+                 LIMIT 1`,
+                [
+                    req.user.id,
+                    productId,
+                ]
+            );
+
+
+        // =================================================
+        // UPDATE EXISTING ITEM
+        // =================================================
+
+        if (existing.length > 0) {
+
+            const newQuantity =
+                Number(existing[0].quantity) +
+                qty;
+
+
+            await db.promise().query(
+                `UPDATE cart_items
+                 SET quantity = ?
+                 WHERE id = ?
+                 AND user_id = ?`,
+                [
+                    newQuantity,
+                    existing[0].id,
+                    req.user.id,
+                ]
+            );
+
+
+            return res.status(200).json({
+                success: true,
+                message:
+                    "Cart quantity updated",
+            });
+        }
+
+
+        // =================================================
+        // INSERT NEW NON-VARIANT ITEM
+        // =================================================
+
+        await db.promise().query(
+            `INSERT INTO cart_items
+            (
+                user_id,
+                product_id,
+                product_variant_id,
+                quantity
+            )
+            VALUES (?, ?, NULL, ?)`,
+            [
+                req.user.id,
+                productId,
+                qty,
+            ]
+        );
+
+
+        return res.status(201).json({
             success: true,
-            message: "Product added to cart",
+            message:
+                "Product added to cart",
         });
 
     } catch (error) {
-        console.error("ADD TO CART ERROR:", error);
+        console.error(
+            "ADD TO CART ERROR:",
+            error
+        );
 
         res.status(500).json({
             success: false,
-            message: "Failed to add product to cart",
+            message:
+                "Failed to add product to cart",
         });
     }
 };
@@ -479,14 +558,41 @@ exports.addToCart = async (req, res) => {
 
 exports.updateCart = async (req, res) => {
     try {
-        const qty = Number(
-            req.body.quantity
-        );
+        const cartItemId =
+            Number(req.params.id);
 
-        if (!qty || qty < 1) {
+        const qty =
+            Number(req.body.quantity);
+
+
+        // =================================================
+        // VALIDATE CART ITEM ID
+        // =================================================
+
+        if (
+            !cartItemId ||
+            cartItemId < 1
+        ) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid quantity",
+                message:
+                    "Invalid cart item ID",
+            });
+        }
+
+
+        // =================================================
+        // VALIDATE QUANTITY
+        // =================================================
+
+        if (
+            !Number.isInteger(qty) ||
+            qty < 1
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Quantity must be at least 1",
             });
         }
 
@@ -502,17 +608,24 @@ exports.updateCart = async (req, res) => {
                     ci.product_id,
                     ci.product_variant_id,
 
-                    pv.stock_quantity
+                    pv.stock_quantity,
+
+                    p.name,
+                    p.status
 
                  FROM cart_items ci
+
+                 INNER JOIN products p
+                    ON p.id = ci.product_id
 
                  LEFT JOIN product_variants pv
                     ON ci.product_variant_id = pv.id
 
                  WHERE ci.id = ?
-                 AND ci.user_id = ?`,
+                 AND ci.user_id = ?
+                 LIMIT 1`,
                 [
-                    req.params.id,
+                    cartItemId,
                     req.user.id,
                 ]
             );
@@ -521,7 +634,8 @@ exports.updateCart = async (req, res) => {
         if (items.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: "Cart item not found",
+                message:
+                    "Cart item not found",
             });
         }
 
@@ -530,65 +644,66 @@ exports.updateCart = async (req, res) => {
 
 
         // =================================================
+        // CHECK PRODUCT STATUS
+        // =================================================
+
+        if (
+            item.status &&
+            item.status !== "active"
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Product is no longer available",
+            });
+        }
+
+
+        // =================================================
         // VARIANT CART ITEM
         // =================================================
 
         if (item.product_variant_id) {
 
-            if (
-                qty >
-                Number(item.stock_quantity)
-            ) {
+            const stock =
+                Number(
+                    item.stock_quantity || 0
+                );
+
+
+            if (stock <= 0) {
                 return res.status(400).json({
                     success: false,
                     message:
-                        "Quantity exceeds available stock",
+                        "Selected variant is out of stock",
                 });
             }
 
-        } else {
 
-            // =================================================
-            // NO VARIANT SELECTED
-            // =================================================
-            //
-            // Check total available stock across variants.
-            // =================================================
-
-            const [stock] =
-                await db.promise().query(
-                    `SELECT
-                        COALESCE(
-                            SUM(stock_quantity),
-                            0
-                        ) AS total_stock
-                     FROM product_variants
-                     WHERE product_id = ?`,
-                    [item.product_id]
-                );
-
-
-            const totalStock =
-                Number(
-                    stock[0]?.total_stock || 0
-                );
-
-
-            if (
-                totalStock > 0 &&
-                qty > totalStock
-            ) {
+            if (qty > stock) {
                 return res.status(400).json({
                     success: false,
                     message:
-                        "Quantity exceeds available stock",
+                        `Only ${stock} item(s) available`,
                 });
             }
         }
 
 
         // =================================================
-        // UPDATE QUANTITY
+        // NON-VARIANT PRODUCT
+        // =================================================
+
+        // No stock_quantity column exists on the current
+        // products table, so there is no stock validation
+        // for non-variant products here.
+        //
+        // If you later add products.stock_quantity,
+        // this section can be updated.
+
+
+        // =================================================
+        // UPDATE CART ITEM
         // =================================================
 
         await db.promise().query(
@@ -598,7 +713,7 @@ exports.updateCart = async (req, res) => {
              AND user_id = ?`,
             [
                 qty,
-                req.params.id,
+                cartItemId,
                 req.user.id,
             ]
         );
@@ -606,7 +721,8 @@ exports.updateCart = async (req, res) => {
 
         res.json({
             success: true,
-            message: "Cart updated",
+            message:
+                "Cart updated successfully",
         });
 
     } catch (error) {
@@ -617,7 +733,8 @@ exports.updateCart = async (req, res) => {
 
         res.status(500).json({
             success: false,
-            message: "Failed to update cart",
+            message:
+                "Failed to update cart",
         });
     }
 };
@@ -629,6 +746,29 @@ exports.updateCart = async (req, res) => {
 
 exports.removeFromCart = async (req, res) => {
     try {
+        const cartItemId =
+            Number(req.params.id);
+
+
+        // =================================================
+        // VALIDATE ID
+        // =================================================
+
+        if (
+            !cartItemId ||
+            cartItemId < 1
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Invalid cart item ID",
+            });
+        }
+
+
+        // =================================================
+        // DELETE ONLY USER'S OWN CART ITEM
+        // =================================================
 
         const [result] =
             await db.promise().query(
@@ -636,23 +776,27 @@ exports.removeFromCart = async (req, res) => {
                  WHERE id = ?
                  AND user_id = ?`,
                 [
-                    req.params.id,
+                    cartItemId,
                     req.user.id,
                 ]
             );
 
 
-        if (result.affectedRows === 0) {
+        if (
+            result.affectedRows === 0
+        ) {
             return res.status(404).json({
                 success: false,
-                message: "Cart item not found",
+                message:
+                    "Cart item not found",
             });
         }
 
 
         res.json({
             success: true,
-            message: "Item removed from cart",
+            message:
+                "Item removed from cart",
         });
 
     } catch (error) {
@@ -663,7 +807,10 @@ exports.removeFromCart = async (req, res) => {
 
         res.status(500).json({
             success: false,
-            message: "Failed to remove cart item",
+            message:
+                "Failed to remove cart item",
         });
     }
 };
+
+
