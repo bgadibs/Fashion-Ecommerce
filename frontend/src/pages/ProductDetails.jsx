@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { FiHeart, FiShoppingBag } from "react-icons/fi";
@@ -81,24 +82,31 @@ const ProductDetails = () => {
        PRODUCT DATA
     ========================= */
 
-    const variants =
-        product.variants || [];
+    const variants = Array.isArray(product.variants)
+        ? product.variants
+        : [];
 
-    const images =
-        product.images || [];
+    const images = Array.isArray(product.images)
+        ? product.images
+        : [];
 
     const price =
-        selectedVariant?.price_override ??
-        product.sale_price ??
-        product.base_price;
+        selectedVariant?.price_override !== null &&
+        selectedVariant?.price_override !== undefined
+            ? selectedVariant.price_override
+            : product.sale_price !== null &&
+              product.sale_price !== undefined &&
+              Number(product.sale_price) > 0
+            ? product.sale_price
+            : product.base_price;
 
     const primaryImage =
         images.find(
             (image) =>
                 Number(image.is_primary) === 1
         )?.image_path ||
-        images[0]?.image_path;
-
+        images[0]?.image_path ||
+        null;
 
     /* =========================
        ADD TO BAG
@@ -113,18 +121,24 @@ const ProductDetails = () => {
             return;
         }
 
+        /*
+         * If the product has variants,
+         * customer MUST select one.
+         */
+
+        if (
+            variants.length > 0 &&
+            !selectedVariant
+        ) {
+            alert(
+                "Please select a size or color before adding the product to bag."
+            );
+
+            return;
+        }
+
         try {
             setCartLoading(true);
-
-            /*
-             * SIZE / COLOR ARE OPTIONAL
-             *
-             * If customer selects a variant,
-             * send the variant ID.
-             *
-             * If customer does not select a
-             * variant, send the product ID.
-             */
 
             const cartData = {
                 product_id: product.id,
@@ -161,7 +175,6 @@ const ProductDetails = () => {
             setCartLoading(false);
         }
     };
-
 
     /* =========================
        ADD TO WISHLIST
@@ -202,7 +215,6 @@ const ProductDetails = () => {
             setWishlistLoading(false);
         }
     };
-
 
     return (
         <div className="product-details-page">
@@ -268,10 +280,11 @@ const ProductDetails = () => {
 
                 <div className="detail-info">
 
-                    <span className="detail-brand">
-                        {product.brand ||
-                            "FashionHub"}
-                    </span>
+                    {product.brand && (
+                        <span className="detail-brand">
+                            {product.brand}
+                        </span>
+                    )}
 
 
                     <h1>
@@ -303,7 +316,12 @@ const ProductDetails = () => {
                             "en-IN"
                         )}
 
-                        {product.sale_price && (
+                        {product.sale_price !== null &&
+                            product.sale_price !== undefined &&
+                            Number(product.sale_price) > 0 &&
+                            Number(product.sale_price) <
+                                Number(product.base_price) && (
+
                             <del>
                                 ₹
                                 {Number(
@@ -312,6 +330,7 @@ const ProductDetails = () => {
                                     "en-IN"
                                 )}
                             </del>
+
                         )}
 
                     </div>
@@ -319,12 +338,11 @@ const ProductDetails = () => {
 
                     {/* DESCRIPTION */}
 
-                    <p className="detail-description">
-
-                        {product.description ||
-                            "Beautifully designed fashion piece made for your everyday style."}
-
-                    </p>
+                    {product.description && (
+                        <p className="detail-description">
+                            {product.description}
+                        </p>
+                    )}
 
 
                     {/* =========================
@@ -337,16 +355,6 @@ const ProductDetails = () => {
 
                             <h3>
                                 Select Size / Color
-                                <span
-                                    style={{
-                                        fontSize: "12px",
-                                        fontWeight: "400",
-                                        color: "#777",
-                                        marginLeft: "8px"
-                                    }}
-                                >
-                                    (Optional)
-                                </span>
                             </h3>
 
                             <div className="variant-list">
@@ -360,7 +368,7 @@ const ProductDetails = () => {
 
                                         const isOutOfStock =
                                             Number(
-                                                variant.stock_quantity
+                                                variant.stock_quantity || 0
                                             ) <= 0;
 
                                         return (
@@ -398,11 +406,11 @@ const ProductDetails = () => {
                             </div>
 
 
-                            {/* OPTIONAL MESSAGE */}
+                            {/* SELECTION MESSAGE */}
 
                             {!selectedVariant && (
                                 <p className="selected-variant-info">
-                                    Size / Color selection is optional.
+                                    Please select a size or color.
                                 </p>
                             )}
 
@@ -427,9 +435,9 @@ const ProductDetails = () => {
                                     Stock:
                                     {" "}
 
-                                    {
-                                        selectedVariant.stock_quantity
-                                    }
+                                    {Number(
+                                        selectedVariant.stock_quantity || 0
+                                    )}
 
                                 </p>
 
@@ -450,7 +458,13 @@ const ProductDetails = () => {
                             type="button"
                             className="add-cart-button"
                             onClick={handleAddToBag}
-                            disabled={cartLoading}
+                            disabled={
+                                cartLoading ||
+                                (
+                                    variants.length > 0 &&
+                                    !selectedVariant
+                                )
+                            }
                         >
 
                             <FiShoppingBag />
@@ -518,3 +532,4 @@ const ProductDetails = () => {
 };
 
 export default ProductDetails;
+
