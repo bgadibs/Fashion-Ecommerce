@@ -106,7 +106,6 @@ const AddProduct = () => {
                     const response =
                         await getCategories();
 
-
                     if (
                         response.data.success
                     ) {
@@ -181,9 +180,9 @@ const AddProduct = () => {
         }));
 
 
-        // -------------------------------------------------
+        // =================================================
         // IMAGE URL
-        // -------------------------------------------------
+        // =================================================
 
         if (name === "image") {
 
@@ -215,11 +214,13 @@ const AddProduct = () => {
         }
 
 
-        // -------------------------------------------------
+        // =================================================
         // CHECK IMAGE TYPE
-        // -------------------------------------------------
+        // =================================================
 
-        if (!file.type.startsWith("image/")) {
+        if (
+            !file.type.startsWith("image/")
+        ) {
 
             alert(
                 "Please select a valid image file."
@@ -232,10 +233,10 @@ const AddProduct = () => {
         }
 
 
-        // -------------------------------------------------
+        // =================================================
         // CHECK IMAGE SIZE
-        // Maximum 5MB
-        // -------------------------------------------------
+        // MAXIMUM 5MB
+        // =================================================
 
         if (
             file.size >
@@ -253,9 +254,9 @@ const AddProduct = () => {
         }
 
 
-        // -------------------------------------------------
+        // =================================================
         // STORE FILE
-        // -------------------------------------------------
+        // =================================================
 
         setImageFile(file);
 
@@ -271,9 +272,9 @@ const AddProduct = () => {
         }));
 
 
-        // -------------------------------------------------
+        // =================================================
         // PREVIEW
-        // -------------------------------------------------
+        // =================================================
 
         const previewUrl =
             URL.createObjectURL(file);
@@ -367,7 +368,9 @@ const AddProduct = () => {
 
     const removeVariant = (index) => {
 
-        if (variants.length === 1) {
+        if (
+            variants.length === 1
+        ) {
 
             return;
 
@@ -394,14 +397,14 @@ const AddProduct = () => {
         e.preventDefault();
 
 
-        // -------------------------------------------------
+        // =================================================
         // BASIC VALIDATION
-        // -------------------------------------------------
+        // =================================================
 
         if (
             !form.name.trim() ||
             !form.category_id ||
-            !form.base_price
+            form.base_price === ""
         ) {
 
             alert(
@@ -413,9 +416,104 @@ const AddProduct = () => {
         }
 
 
-        // -------------------------------------------------
+        // =================================================
+        // CATEGORY ID
+        // =================================================
+
+        const categoryId =
+            Number(form.category_id);
+
+
+        if (
+            !Number.isFinite(categoryId) ||
+            categoryId <= 0
+        ) {
+
+            alert(
+                "Please select a valid category."
+            );
+
+            return;
+
+        }
+
+
+        // =================================================
+        // BASE PRICE
+        // =================================================
+
+        const basePrice =
+            Number(form.base_price);
+
+
+        if (
+            !Number.isFinite(basePrice) ||
+            basePrice < 0
+        ) {
+
+            alert(
+                "Please enter a valid Base Price."
+            );
+
+            return;
+
+        }
+
+
+        // =================================================
+        // SALE PRICE
+        // =================================================
+
+        let salePrice = null;
+
+
+        if (
+            form.sale_price !== "" &&
+            form.sale_price !== null &&
+            form.sale_price !== undefined
+        ) {
+
+            salePrice =
+                Number(form.sale_price);
+
+
+            if (
+                !Number.isFinite(salePrice) ||
+                salePrice < 0
+            ) {
+
+                alert(
+                    "Please enter a valid Sale Price."
+                );
+
+                return;
+
+            }
+
+        }
+
+
+        // =================================================
+        // SALE PRICE VALIDATION
+        // =================================================
+
+        if (
+            salePrice !== null &&
+            salePrice > basePrice
+        ) {
+
+            alert(
+                "Sale Price should not be greater than Base Price."
+            );
+
+            return;
+
+        }
+
+
+        // =================================================
         // IMAGE VALIDATION
-        // -------------------------------------------------
+        // =================================================
 
         if (
             !form.image &&
@@ -436,69 +534,163 @@ const AddProduct = () => {
             setLoading(true);
 
 
-            // -------------------------------------------------
+            // =================================================
+            // PREPARE VARIANTS
+            // =================================================
+
+            const preparedVariants =
+                variants.map(
+                    (variant) => {
+
+                        let priceOverride =
+                            null;
+
+
+                        // -----------------------------------------
+                        // PRICE OVERRIDE
+                        // -----------------------------------------
+
+                        if (
+                            variant.price_override !== "" &&
+                            variant.price_override !== null &&
+                            variant.price_override !== undefined
+                        ) {
+
+                            priceOverride =
+                                Number(
+                                    variant.price_override
+                                );
+
+
+                            if (
+                                !Number.isFinite(
+                                    priceOverride
+                                ) ||
+                                priceOverride < 0
+                            ) {
+
+                                throw new Error(
+                                    `Invalid Price Override in Variant.`
+                                );
+
+                            }
+
+                        }
+
+
+                        // -----------------------------------------
+                        // STOCK
+                        // -----------------------------------------
+
+                        let stockQuantity =
+                            0;
+
+
+                        if (
+                            variant.stock_quantity !== "" &&
+                            variant.stock_quantity !== null &&
+                            variant.stock_quantity !== undefined
+                        ) {
+
+                            stockQuantity =
+                                Number(
+                                    variant.stock_quantity
+                                );
+
+
+                            if (
+                                !Number.isFinite(
+                                    stockQuantity
+                                ) ||
+                                stockQuantity < 0
+                            ) {
+
+                                throw new Error(
+                                    `Invalid Stock Quantity in Variant.`
+                                );
+
+                            }
+
+                        }
+
+
+                        return {
+
+                            size:
+                                variant.size?.trim() || "",
+
+                            color:
+                                variant.color?.trim() || "",
+
+                            sku:
+                                variant.sku?.trim() || "",
+
+                            price_override:
+                                priceOverride,
+
+                            stock_quantity:
+                                stockQuantity
+
+                        };
+
+                    }
+                );
+
+
+            // =================================================
             // PRODUCT DATA
-            // -------------------------------------------------
+            // =================================================
 
             const productData = {
 
-                ...form,
+                name:
+                    form.name.trim(),
+
+                description:
+                    form.description.trim() || null,
 
                 category_id:
-                    Number(
-                        form.category_id
-                    ),
+                    categoryId,
+
+                brand:
+                    form.brand.trim() || null,
+
+                sku:
+                    form.sku.trim() || null,
 
                 base_price:
-                    Number(
-                        form.base_price
-                    ),
+                    basePrice,
 
                 sale_price:
-                    form.sale_price
-                        ? Number(
-                            form.sale_price
-                        )
-                        : null,
+                    salePrice,
 
+                featured:
+                    Boolean(form.featured),
+
+                status:
+                    form.status,
+
+                image:
+                    form.image.trim() || null,
 
                 variants:
+                    preparedVariants,
 
-                    variants.map(
-                        (variant) => ({
-
-                            ...variant,
-
-                            price_override:
-                                variant.price_override
-                                    ? Number(
-                                        variant.price_override
-                                    )
-                                    : null,
-
-                            stock_quantity:
-                                Number(
-                                    variant.stock_quantity || 0
-                                )
-
-                        })
-                    ),
-
-
-                // -------------------------------------------------
-                // IMPORTANT
-                // Pass the actual selected File
-                // to the API service.
-                // -------------------------------------------------
-
-                imageFile: imageFile
+                imageFile:
+                    imageFile
 
             };
 
 
-            // -------------------------------------------------
+            console.log(
+                "PRODUCT DATA:",
+                productData
+            );
+
+
+            // =================================================
             // CREATE PRODUCT
-            // -------------------------------------------------
+            // =================================================
 
             const response =
                 await createAdminProduct(
@@ -506,9 +698,9 @@ const AddProduct = () => {
                 );
 
 
-            // -------------------------------------------------
+            // =================================================
             // SUCCESS
-            // -------------------------------------------------
+            // =================================================
 
             if (
                 response.data.success
@@ -521,6 +713,13 @@ const AddProduct = () => {
 
                 navigate(
                     "/admin/products"
+                );
+
+            } else {
+
+                alert(
+                    response.data.message ||
+                    "Failed to add product."
                 );
 
             }
@@ -536,6 +735,8 @@ const AddProduct = () => {
             alert(
 
                 error.response?.data?.message ||
+
+                error.message ||
 
                 "Failed to add product"
 
@@ -1128,6 +1329,7 @@ const AddProduct = () => {
                                                     )
                                                 }
                                                 min="0"
+                                                step="1"
                                                 placeholder="10"
                                             />
 

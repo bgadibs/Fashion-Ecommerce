@@ -233,13 +233,18 @@ exports.createProduct = async (req, res) => {
 
 
         // -------------------------------------------------
-        // VALIDATION
+        // BASIC VALIDATION
         // -------------------------------------------------
 
         if (
             !name ||
-            !category_id ||
-            !base_price
+            !String(name).trim() ||
+            category_id === undefined ||
+            category_id === null ||
+            category_id === "" ||
+            base_price === undefined ||
+            base_price === null ||
+            base_price === ""
         ) {
 
             connection.release();
@@ -256,12 +261,137 @@ exports.createProduct = async (req, res) => {
 
 
         // -------------------------------------------------
+        // SAFE CATEGORY ID
+        // -------------------------------------------------
+
+        const categoryId =
+            Number(category_id);
+
+
+        if (
+            !Number.isInteger(categoryId) ||
+            categoryId <= 0
+        ) {
+
+            connection.release();
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Category must be a valid category"
+
+            });
+        }
+
+
+        // -------------------------------------------------
+        // SAFE BASE PRICE
+        // -------------------------------------------------
+
+        const basePrice =
+            Number(base_price);
+
+
+        if (
+            !Number.isFinite(basePrice) ||
+            basePrice < 0
+        ) {
+
+            connection.release();
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Base price must be a valid number"
+
+            });
+        }
+
+
+        // -------------------------------------------------
+        // SAFE SALE PRICE
+        // -------------------------------------------------
+
+        let salePrice = null;
+
+
+        if (
+            sale_price !== undefined &&
+            sale_price !== null &&
+            String(sale_price).trim() !== ""
+        ) {
+
+            salePrice =
+                Number(sale_price);
+
+
+            if (
+                !Number.isFinite(salePrice) ||
+                salePrice < 0
+            ) {
+
+                connection.release();
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Sale price must be a valid number"
+
+                });
+            }
+
+
+            // Sale price should not exceed base price
+            if (salePrice > basePrice) {
+
+                connection.release();
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Sale price cannot be greater than base price"
+
+                });
+            }
+        }
+
+
+        // -------------------------------------------------
+        // SAFE FEATURED VALUE
+        // -------------------------------------------------
+
+        const featuredValue =
+
+            featured === "1" ||
+            featured === 1 ||
+            featured === true
+                ? 1
+                : 0;
+
+
+        // -------------------------------------------------
+        // SAFE STATUS
+        // -------------------------------------------------
+
+        const productStatus =
+            status || "active";
+
+
+        // -------------------------------------------------
         // SLUG
         // -------------------------------------------------
 
         const slug =
 
-            name
+            String(name)
                 .toLowerCase()
                 .trim()
                 .replace(
@@ -317,7 +447,7 @@ exports.createProduct = async (req, res) => {
 
         // Image URL
         else if (
-            image &&
+            typeof image === "string" &&
             image.trim()
         ) {
 
@@ -347,7 +477,7 @@ exports.createProduct = async (req, res) => {
 
                 WHERE id = ?
 
-            `, [category_id]);
+            `, [categoryId]);
 
 
         if (category.length === 0) {
@@ -393,33 +523,31 @@ exports.createProduct = async (req, res) => {
 
             `, [
 
-                name.trim(),
+                String(name).trim(),
 
                 slug,
 
-                description || null,
-
-                category_id,
-
-                brand || null,
-
-                sku || null,
-
-                Number(base_price),
-
-                sale_price !== undefined &&
-                sale_price !== null &&
-                sale_price !== ""
-                    ? Number(sale_price)
+                description
+                    ? String(description).trim()
                     : null,
 
-                featured === "1" ||
-                featured === 1 ||
-                featured === true
-                    ? 1
-                    : 0,
+                categoryId,
 
-                status || "active"
+                brand
+                    ? String(brand).trim()
+                    : null,
+
+                sku
+                    ? String(sku).trim()
+                    : null,
+
+                basePrice,
+
+                salePrice,
+
+                featuredValue,
+
+                productStatus
 
             ]);
 
@@ -442,35 +570,109 @@ exports.createProduct = async (req, res) => {
             ) {
 
                 const variantSize =
-                    variant.size || null;
-
-
-                const variantColor =
-                    variant.color || null;
-
-
-                const variantSku =
-                    variant.sku || null;
-
-
-                const priceOverride =
-
-                    variant.price_override !== "" &&
-                    variant.price_override !== null &&
-                    variant.price_override !== undefined
-
-                        ? Number(
-                            variant.price_override
-                        )
-
+                    variant.size
+                        ? String(variant.size).trim()
                         : null;
 
 
-                const stockQuantity =
+                const variantColor =
+                    variant.color
+                        ? String(variant.color).trim()
+                        : null;
 
-                    Number(
-                        variant.stock_quantity || 0
-                    );
+
+                const variantSku =
+                    variant.sku
+                        ? String(variant.sku).trim()
+                        : null;
+
+
+                // -----------------------------------------
+                // SAFE PRICE OVERRIDE
+                // -----------------------------------------
+
+                let priceOverride = null;
+
+
+                if (
+                    variant.price_override !== undefined &&
+                    variant.price_override !== null &&
+                    String(
+                        variant.price_override
+                    ).trim() !== ""
+                ) {
+
+                    priceOverride =
+                        Number(
+                            variant.price_override
+                        );
+
+
+                    if (
+                        !Number.isFinite(
+                            priceOverride
+                        ) ||
+                        priceOverride < 0
+                    ) {
+
+                        await connection.rollback();
+
+                        connection.release();
+
+                        return res.status(400).json({
+
+                            success: false,
+
+                            message:
+                                "Variant price override must be a valid number"
+
+                        });
+                    }
+                }
+
+
+                // -----------------------------------------
+                // SAFE STOCK
+                // -----------------------------------------
+
+                let stockQuantity = 0;
+
+
+                if (
+                    variant.stock_quantity !== undefined &&
+                    variant.stock_quantity !== null &&
+                    String(
+                        variant.stock_quantity
+                    ).trim() !== ""
+                ) {
+
+                    stockQuantity =
+                        Number(
+                            variant.stock_quantity
+                        );
+
+
+                    if (
+                        !Number.isInteger(
+                            stockQuantity
+                        ) ||
+                        stockQuantity < 0
+                    ) {
+
+                        await connection.rollback();
+
+                        connection.release();
+
+                        return res.status(400).json({
+
+                            success: false,
+
+                            message:
+                                "Variant stock must be a valid whole number"
+
+                        });
+                    }
+                }
 
 
                 await connection.query(`
@@ -558,7 +760,8 @@ exports.createProduct = async (req, res) => {
 
             productId,
 
-            image: imagePath
+            image:
+                imagePath
 
         });
 
@@ -566,8 +769,11 @@ exports.createProduct = async (req, res) => {
     } catch (error) {
 
         try {
+
             await connection.rollback();
+
         } catch (rollbackError) {
+
             console.error(
                 "ROLLBACK ERROR:",
                 rollbackError
@@ -645,13 +851,18 @@ exports.updateProduct = async (req, res) => {
 
 
         // -------------------------------------------------
-        // VALIDATION
+        // BASIC VALIDATION
         // -------------------------------------------------
 
         if (
             !name ||
-            !category_id ||
-            !base_price
+            !String(name).trim() ||
+            category_id === undefined ||
+            category_id === null ||
+            category_id === "" ||
+            base_price === undefined ||
+            base_price === null ||
+            base_price === ""
         ) {
 
             connection.release();
@@ -668,12 +879,136 @@ exports.updateProduct = async (req, res) => {
 
 
         // -------------------------------------------------
+        // SAFE CATEGORY ID
+        // -------------------------------------------------
+
+        const categoryId =
+            Number(category_id);
+
+
+        if (
+            !Number.isInteger(categoryId) ||
+            categoryId <= 0
+        ) {
+
+            connection.release();
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Category must be a valid category"
+
+            });
+        }
+
+
+        // -------------------------------------------------
+        // SAFE BASE PRICE
+        // -------------------------------------------------
+
+        const basePrice =
+            Number(base_price);
+
+
+        if (
+            !Number.isFinite(basePrice) ||
+            basePrice < 0
+        ) {
+
+            connection.release();
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Base price must be a valid number"
+
+            });
+        }
+
+
+        // -------------------------------------------------
+        // SAFE SALE PRICE
+        // -------------------------------------------------
+
+        let salePrice = null;
+
+
+        if (
+            sale_price !== undefined &&
+            sale_price !== null &&
+            String(sale_price).trim() !== ""
+        ) {
+
+            salePrice =
+                Number(sale_price);
+
+
+            if (
+                !Number.isFinite(salePrice) ||
+                salePrice < 0
+            ) {
+
+                connection.release();
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Sale price must be a valid number"
+
+                });
+            }
+
+
+            if (salePrice > basePrice) {
+
+                connection.release();
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Sale price cannot be greater than base price"
+
+                });
+            }
+        }
+
+
+        // -------------------------------------------------
+        // SAFE FEATURED VALUE
+        // -------------------------------------------------
+
+        const featuredValue =
+
+            featured === "1" ||
+            featured === 1 ||
+            featured === true
+                ? 1
+                : 0;
+
+
+        // -------------------------------------------------
+        // SAFE STATUS
+        // -------------------------------------------------
+
+        const productStatus =
+            status || "active";
+
+
+        // -------------------------------------------------
         // SLUG
         // -------------------------------------------------
 
         const slug =
 
-            name
+            String(name)
                 .toLowerCase()
                 .trim()
                 .replace(
@@ -765,7 +1100,7 @@ exports.updateProduct = async (req, res) => {
 
                 WHERE id = ?
 
-            `, [category_id]);
+            `, [categoryId]);
 
 
         if (category.length === 0) {
@@ -810,33 +1145,31 @@ exports.updateProduct = async (req, res) => {
 
         `, [
 
-            name.trim(),
+            String(name).trim(),
 
             slug,
 
-            description || null,
-
-            category_id,
-
-            brand || null,
-
-            sku || null,
-
-            Number(base_price),
-
-            sale_price !== undefined &&
-            sale_price !== null &&
-            sale_price !== ""
-                ? Number(sale_price)
+            description
+                ? String(description).trim()
                 : null,
 
-            featured === "1" ||
-            featured === 1 ||
-            featured === true
-                ? 1
-                : 0,
+            categoryId,
 
-            status || "active",
+            brand
+                ? String(brand).trim()
+                : null,
+
+            sku
+                ? String(sku).trim()
+                : null,
+
+            basePrice,
+
+            salePrice,
+
+            featuredValue,
+
+            productStatus,
 
             id
 
@@ -865,17 +1198,110 @@ exports.updateProduct = async (req, res) => {
                 const variant of parsedVariants
             ) {
 
-                const priceOverride =
-
-                    variant.price_override !== "" &&
-                    variant.price_override !== null &&
-                    variant.price_override !== undefined
-
-                        ? Number(
-                            variant.price_override
-                        )
-
+                const variantSize =
+                    variant.size
+                        ? String(variant.size).trim()
                         : null;
+
+
+                const variantColor =
+                    variant.color
+                        ? String(variant.color).trim()
+                        : null;
+
+
+                const variantSku =
+                    variant.sku
+                        ? String(variant.sku).trim()
+                        : null;
+
+
+                // -----------------------------------------
+                // SAFE PRICE OVERRIDE
+                // -----------------------------------------
+
+                let priceOverride = null;
+
+
+                if (
+                    variant.price_override !== undefined &&
+                    variant.price_override !== null &&
+                    String(
+                        variant.price_override
+                    ).trim() !== ""
+                ) {
+
+                    priceOverride =
+                        Number(
+                            variant.price_override
+                        );
+
+
+                    if (
+                        !Number.isFinite(
+                            priceOverride
+                        ) ||
+                        priceOverride < 0
+                    ) {
+
+                        await connection.rollback();
+
+                        connection.release();
+
+                        return res.status(400).json({
+
+                            success: false,
+
+                            message:
+                                "Variant price override must be a valid number"
+
+                        });
+                    }
+                }
+
+
+                // -----------------------------------------
+                // SAFE STOCK
+                // -----------------------------------------
+
+                let stockQuantity = 0;
+
+
+                if (
+                    variant.stock_quantity !== undefined &&
+                    variant.stock_quantity !== null &&
+                    String(
+                        variant.stock_quantity
+                    ).trim() !== ""
+                ) {
+
+                    stockQuantity =
+                        Number(
+                            variant.stock_quantity
+                        );
+
+
+                    if (
+                        !Number.isInteger(
+                            stockQuantity
+                        ) ||
+                        stockQuantity < 0
+                    ) {
+
+                        await connection.rollback();
+
+                        connection.release();
+
+                        return res.status(400).json({
+
+                            success: false,
+
+                            message:
+                                "Variant stock must be a valid whole number"
+
+                        });
+                    }
+                }
 
 
                 await connection.query(`
@@ -897,17 +1323,15 @@ exports.updateProduct = async (req, res) => {
 
                     id,
 
-                    variant.size || null,
+                    variantSize,
 
-                    variant.color || null,
+                    variantColor,
 
-                    variant.sku || null,
+                    variantSku,
 
                     priceOverride,
 
-                    Number(
-                        variant.stock_quantity || 0
-                    )
+                    stockQuantity
 
                 ]);
             }
@@ -931,7 +1355,7 @@ exports.updateProduct = async (req, res) => {
 
         // Image URL
         else if (
-            image &&
+            typeof image === "string" &&
             image.trim()
         ) {
 
@@ -1002,8 +1426,11 @@ exports.updateProduct = async (req, res) => {
     } catch (error) {
 
         try {
+
             await connection.rollback();
+
         } catch (rollbackError) {
+
             console.error(
                 "ROLLBACK ERROR:",
                 rollbackError
@@ -1279,8 +1706,11 @@ exports.deleteProduct = async (req, res) => {
     } catch (error) {
 
         try {
+
             await connection.rollback();
+
         } catch (rollbackError) {
+
             console.error(
                 "ROLLBACK ERROR:",
                 rollbackError

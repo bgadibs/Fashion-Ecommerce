@@ -1,3 +1,4 @@
+
 require("dotenv").config();
 
 const express = require("express");
@@ -19,7 +20,12 @@ app.use(
 );
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+app.use(
+    express.urlencoded({
+        extended: true
+    })
+);
 
 
 // =====================================================
@@ -185,31 +191,86 @@ app.use(
 // SERVE FRONTEND
 // =====================================================
 
-const frontendPath = path.join(__dirname, "..", "frontend", "dist");
-app.use(express.static(frontendPath));
+const frontendPath =
+    path.join(
+        __dirname,
+        "..",
+        "frontend",
+        "dist"
+    );
 
-app.get("/{*splat}", (req, res) => {
-    res.sendFile(path.join(frontendPath, "index.html"));
-});
+app.use(
+    express.static(frontendPath)
+);
+
+
+// =====================================================
+// REACT SPA FALLBACK
+// =====================================================
+
+app.get(
+    "/{*splat}",
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                frontendPath,
+                "index.html"
+            )
+        );
+
+    }
+);
 
 
 // =====================================================
 // ERROR HANDLER
 // =====================================================
 
-app.use((err, req, res, next) => {
+app.use(
+    (err, req, res, next) => {
 
-    console.error(
-        "❌ SERVER ERROR:",
-        err
-    );
+        console.error(
+            "========================================"
+        );
 
-    res.status(500).json({
-        success: false,
-        message: "Internal server error"
-    });
+        console.error(
+            "❌ SERVER ERROR"
+        );
 
-});
+        console.error(
+            "METHOD:",
+            req.method
+        );
+
+        console.error(
+            "URL:",
+            req.originalUrl
+        );
+
+        console.error(
+            "MESSAGE:",
+            err.message
+        );
+
+        console.error(
+            "STACK:",
+            err.stack
+        );
+
+        console.error(
+            "========================================"
+        );
+
+        res.status(500).json({
+            success: false,
+            message:
+                err.message ||
+                "Internal server error"
+        });
+
+    }
+);
 
 
 // =====================================================
@@ -219,22 +280,26 @@ app.use((err, req, res, next) => {
 const PORT =
     process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+app.listen(
+    PORT,
+    () => {
 
-    console.log(
-        "========================================"
-    );
+        console.log(
+            "========================================"
+        );
 
-    console.log(
-        "🚀 Fashion Store Backend"
-    );
+        console.log(
+            "🚀 Fashion Store Backend"
+        );
 
-    console.log(
-        `🌐 http://localhost:${PORT}`
-    );
+        console.log(
+            `🌐 http://localhost:${PORT}`
+        );
 
-    console.log(
-        "========================================"
-    );
+        console.log(
+            "========================================"
+        );
 
-});
+    }
+);
+
