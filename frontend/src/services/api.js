@@ -151,7 +151,7 @@ export { API };
    ========================================================= */
 
 export const ADMIN_API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "/api",
   headers: {
     "Content-Type": "application/json",
   },
