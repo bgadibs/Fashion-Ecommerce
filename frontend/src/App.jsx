@@ -73,6 +73,9 @@ import CustomerSettings from "./pages/CustomerSettings";
 import AdminLayout from "./admin/AdminLayout";
 import AdminSettings from "./pages/AdminSettings";
 import Orders from "./pages/Orders";
+import Contact from "./pages/Contact";
+import FAQ from "./pages/FAQ";
+import Shipping from "./pages/Shipping";
 
 
 // =====================================================
@@ -114,135 +117,162 @@ const App = () => {
 
             <StoreProvider>
 
-            <AppProvider>
+                <AppProvider>
 
-                <Routes>
+                    <Routes>
 
 
-                    {/* =================================================
+                        {/* =================================================
                         CUSTOMER PAGES
                     ================================================= */}
 
-                    <Route
-                        path="/"
-                        element={
-                            <CustomerLayout>
-                                <Home />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="/"
+                            element={
+                                <CustomerLayout>
+                                    <Home />
+                                </CustomerLayout>
+                            }
+                        />
 
 
-                    <Route
-                        path="/products"
-                        element={
-                            <CustomerLayout>
-                                <Products />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="/products"
+                            element={
+                                <CustomerLayout>
+                                    <Products />
+                                </CustomerLayout>
+                            }
+                        />
 
 
-                    <Route
-                        path="/products/:id"
-                        element={
-                            <CustomerLayout>
-                                <ProductDetails />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="/products/:id"
+                            element={
+                                <CustomerLayout>
+                                    <ProductDetails />
+                                </CustomerLayout>
+                            }
+                        />
 
 
-                    <Route
-                        path="/login"
-                        element={
-                            <CustomerLayout>
-                                <Login />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="/login"
+                            element={
+                                <CustomerLayout>
+                                    <Login />
+                                </CustomerLayout>
+                            }
+                        />
 
 
-                    <Route
-                        path="/register"
-                        element={
-                            <CustomerLayout>
-                                <Register />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="/register"
+                            element={
+                                <CustomerLayout>
+                                    <Register />
+                                </CustomerLayout>
+                            }
+                        />
 
 
-                    <Route
-                        path="/profile"
-                        element={
-                            <CustomerLayout>
-                                <Profile />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="/profile"
+                            element={
+                                <CustomerLayout>
+                                    <Profile />
+                                </CustomerLayout>
+                            }
+                        />
 
 
-                    <Route
-                        path="/address"
-                        element={
-                            <CustomerLayout>
-                                <Address />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="/address"
+                            element={
+                                <CustomerLayout>
+                                    <Address />
+                                </CustomerLayout>
+                            }
+                        />
 
 
-                    <Route
-                        path="/wishlist"
-                        element={
-                            <CustomerLayout>
-                                <Wishlist />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="/wishlist"
+                            element={
+                                <CustomerLayout>
+                                    <Wishlist />
+                                </CustomerLayout>
+                            }
+                        />
 
 
-                    <Route
-                        path="/cart"
-                        element={
-                            <CustomerLayout>
-                                <Cart />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="/cart"
+                            element={
+                                <CustomerLayout>
+                                    <Cart />
+                                </CustomerLayout>
+                            }
+                        />
 
 
-                    <Route
-                        path="/checkout"
-                        element={
-                            <CustomerLayout>
-                                <Checkout />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="/checkout"
+                            element={
+                                <CustomerLayout>
+                                    <Checkout />
+                                </CustomerLayout>
+                            }
+                        />
 
-                    <Route
-                        path="/orders"
-                        element={<Orders />}
-                    />
+                        <Route
+                            path="/orders"
+                            element={<Orders />}
+                        />
 
-                    <Route
-                        path="/addresses"
-                        element={<Address />}
-                    />
+                        <Route
+                            path="/addresses"
+                            element={<Address />}
+                        />
 
-                    <Route
-                        path="/account/settings"
-                        element={
-                            <CustomerLayout>
-                                <CustomerSettings />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="/account/settings"
+                            element={
+                                <CustomerLayout>
+                                    <CustomerSettings />
+                                </CustomerLayout>
+                            }
+                        />
+
+                        <Route
+                            path="/contact"
+                            element={
+                                <CustomerLayout>
+                                    <Contact />
+                                </CustomerLayout>
+                            }
+                        />
+
+                        <Route
+                            path="/faq"
+                            element={
+                                <CustomerLayout>
+                                    <FAQ />
+                                </CustomerLayout>
+                            }
+                        />
+
+                        <Route
+                            path="/shipping"
+                            element={
+                                <CustomerLayout>
+                                    <Shipping />
+                                </CustomerLayout>
+                            }
+                        />
 
 
-                    {/* =================================================
+                        {/* =================================================
                         ADMIN PAGES
                         
                         IMPORTANT:
@@ -253,91 +283,91 @@ const App = () => {
                     ================================================= */}
 
 
-                    <Route
-                        path="/admin/dashboard"
-                        element={
-                            <AdminDashboard />
-                        }
-                    />
+                        <Route
+                            path="/admin/dashboard"
+                            element={
+                                <AdminDashboard />
+                            }
+                        />
 
 
-                    <Route
-                        path="/admin/products"
-                        element={
-                            <AdminProducts />
-                        }
-                    />
+                        <Route
+                            path="/admin/products"
+                            element={
+                                <AdminProducts />
+                            }
+                        />
 
 
-                    <Route
-                        path="/admin/products/add"
-                        element={
-                            <AddProduct />
-                        }
-                    />
+                        <Route
+                            path="/admin/products/add"
+                            element={
+                                <AddProduct />
+                            }
+                        />
 
 
-                    <Route
-                        path="/admin/products/edit/:id"
-                        element={
-                            <AddProduct />
-                        }
-                    />
+                        <Route
+                            path="/admin/products/edit/:id"
+                            element={
+                                <AddProduct />
+                            }
+                        />
 
 
-                    <Route
-                        path="/admin/orders"
-                        element={
-                            <AdminOrders />
-                        }
-                    />
+                        <Route
+                            path="/admin/orders"
+                            element={
+                                <AdminOrders />
+                            }
+                        />
 
 
-                    <Route
-                        path="/admin/admin-management"
-                        element={
-                            <AdminManagement />
-                        }
-                    />
+                        <Route
+                            path="/admin/admin-management"
+                            element={
+                                <AdminManagement />
+                            }
+                        />
 
-                    <Route
-                        path="/admin/settings"
-                        element={
-                            <AdminLayout>
-                                <AdminSettings />
-                            </AdminLayout>
-                        }
-                    />
+                        <Route
+                            path="/admin/settings"
+                            element={
+                                <AdminLayout>
+                                    <AdminSettings />
+                                </AdminLayout>
+                            }
+                        />
 
 
-                    {/* =================================================
+                        {/* =================================================
                         FULL ADMIN STORE
                     ================================================= */}
 
-                    <Route
-                        path="/admin/store"
-                        element={
-                            <AdminStore />
-                        }
-                    />
+                        <Route
+                            path="/admin/store"
+                            element={
+                                <AdminStore />
+                            }
+                        />
 
 
-                    {/* =================================================
+                        {/* =================================================
                         FALLBACK
                     ================================================= */}
 
-                    <Route
-                        path="*"
-                        element={
-                            <CustomerLayout>
-                                <Home />
-                            </CustomerLayout>
-                        }
-                    />
+                        <Route
+                            path="*"
+                            element={
+                                <CustomerLayout>
+                                    <Home />
+                                </CustomerLayout>
+                            }
+                        />
 
-                </Routes>
+                    </Routes>
 
-            </AppProvider>
+                </AppProvider>
 
             </StoreProvider>
 

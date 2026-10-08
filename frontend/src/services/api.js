@@ -5,7 +5,7 @@ import axios from "axios";
    ========================================================= */
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -461,6 +461,15 @@ export const updateAdminSettings = (data) => {
 export const getPublicSettings = () => {
   return API.get("/admin/settings/public");
 };
+
+// =====================================================
+// FAQ API
+// =====================================================
+
+export const getPublicFaqs = () =>
+    API.get("/faqs");
+
+
 
 /* =========================================================
    DEFAULT EXPORT
