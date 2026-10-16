@@ -76,6 +76,7 @@ import Orders from "./pages/Orders";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
 import Shipping from "./pages/Shipping";
+import SuperAdminDashboard from "./admin/SuperAdminDashboard";
 
 
 // =====================================================
@@ -320,6 +321,11 @@ const App = () => {
                             element={
                                 <AdminOrders />
                             }
+                        />
+
+                        <Route
+                            path="/superadmin/dashboard"
+                            element={<SuperAdminDashboard />}
                         />
 
 
