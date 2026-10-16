@@ -18,7 +18,7 @@ import {
     getCategories
 } from "../services/api";
 
-import "../css/add-Product.css";
+import "../css/add-product.css";
 
 
 const MAX_IMAGES = 8;
